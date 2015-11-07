@@ -4,6 +4,11 @@ canVas.width = 1280;
 canVas.height = 720;
 document.body.appendChild(canVas);
 var ctx = canVas.getContext("2d");
+
+var bg = new Image();
+bg.src = "static/bkgrd.png";
+ctx.drawImage(bg,0,0,1280,720);
+
 var lastTime; 
 var background;
 var characters = [];
@@ -20,12 +25,17 @@ var syncanoKey = "b52cb72f9b01c614d882bc5712a3f32b97cb9001";
 var instanceKey = "todolist";
 var syncanoChannel = "todo-list";
 
+var jumplimiter0 = 0;
+var jumplimiter1 = 0;
+
+var gametime = 0;
+
+
 var syncano = new Syncano({
     apiKey: syncanoKey,
     instance: instanceKey,
     userKey: "680405847ef8175e53ee7c834fd9e27ca6312d22"
 });
-
 
 (function watch(){
     syncano.channel(syncanoChannel).poll()
@@ -56,7 +66,7 @@ var syncano = new Syncano({
 })();
 
 resources.load(['../static/bkgrd.png','../static/Cube.bmp']);
-resources.onReady(init);
+//resources.onReady(init);
 
 function init(){
     console.log("happening..um what!");
@@ -73,18 +83,21 @@ function init(){
     lastTime = Date.now();
     main();
     
+    document.getElementById("startbutton").style="visibility:hidden";
 }
 
 function update(dt){
     handleInput(dt);
     for(var i = 0;i<characters.length;i++){
 	characters[i].sprite.update(dt);
+        characters[i].pos[1] += playerSpeed/80;
     }
 }
 
 
 function render(){
     ctx.fillRect(0,0,1280,720);
+    ctx.drawImage(background,0,0,1280,720);
     for(var i = 0;i<characters.length;i++){
 	renderEach(characters[i]);
     }
@@ -99,23 +112,28 @@ function renderEach(entity){
 }
 
 function handleInput(dt){
-    if(input.isDown("UP")||playerAction[0][0])
-	characters[0].pos[1] -= playerSpeed[0] * dt;
+<<<<<<< HEAD
+    if((input.isDown("UP")||playerAction[0][0])&&jumplimiter0<10){
+	characters[0].pos[1] -= playerSpeed[0] * dt * 5;
+	jumplimiter0++;
+    }
     if(input.isDown("LEFT")||playerAction[0][1])
 	characters[0].pos[0] -= playerSpeed[0] * dt;
     if(input.isDown("DOWN")||playerAction[0][2])
 	characters[0].pos[1] += playerSpeed[0] * dt;
     if(input.isDown("RIGHT")||playerAction[0][3])
 	characters[0].pos[0] += playerSpeed[0] * dt;
-    if(input.isDown("w")||playerAction[1][0])
-	characters[1].pos[1] -= playerSpeed[1] * dt;
+
+    if((input.isDown("w")||playerAction[1][0])&&jumplimiter1<10){
+	characters[1].pos[1] -= playerSpeed[1] * dt * 5;
+	jumplimiter1++;
+    }
     if(input.isDown("a")||playerAction[1][1])
 	characters[1].pos[0] -= playerSpeed[1] * dt;
     if(input.isDown("s")||playerAction[1][2])
 	characters[1].pos[1] += playerSpeed[1] * dt;
     if(input.isDown("d")||playerAction[1][3])
 	characters[1].pos[0] += playerSpeed[1] * dt;
-
 }
 
 var requestAnimFrame = (function(){
@@ -129,15 +147,70 @@ var requestAnimFrame = (function(){
         };
 })();
 
+function checkPlayerBounds() {
+    //character 0 x coordinates
+    if (characters[0].pos[0] < 0) characters[0].pos[0] = 0;
+    
+    if (characters[0].pos[0] > canVas.width - characters[0].sprite.size[0]) characters[0].pos[0] = canVas.width - characters[0].sprite.size[0];
+    
+    //character 0 floor and reset jump
+    if (characters[0].pos[1] > canVas.height - characters[0].sprite.size[1]) {
+        characters[0].pos[1] = canVas.height - characters[0].sprite.size[1];
+        if (jumplimiter0 > 0) jumplimiter0 = 0;
+    }
+    
+    //character 1 x coordinates
+    if (characters[1].pos[0] < 0) characters[1].pos[0] = 0;
+    
+    if (characters[1].pos[0] > canVas.width - characters[1].sprite.size[0]) characters[1].pos[0] = canVas.width - characters[1].sprite.size[0];
+    
+    //character 1 floor and reset jump
+    if (characters[1].pos[1] > canVas.height - characters[1].sprite.size[1]) {
+        characters[1].pos[1] = canVas.height - characters[1].sprite.size[1];
+        if (jumplimiter1 > 0) jumplimiter1 = 0;
+    }
+}
+
+function collides(x, y, r, b, x2, y2, r2, b2) {
+    return !(r <= x2 || x > r2 ||
+             b <= y2 || y > b2);
+}
+
+function boxCollides(pos1, size1, pos2, size2) {
+    return collides(pos1[0], pos1[1],
+                    pos1[0] + size1[0], pos1[1] + size1[1],
+                    pos2[0], pos2[1],
+                    pos2[0] + size2[0], pos2[1] + size2[1]);
+}
+
+function checkCollisions() {
+    checkPlayerBounds();
+
+    if (boxCollides(characters[0].pos, characters[0].sprite.size, characters[1].pos, characters[1].sprite.size)) {
+        console.log("collision!");
+    }
+}
+
+function gameover() {
+    ctx.fillText("GAME OVER", canVas.width/2, canVas.height/2);
+}
+
 function main(){
     var now = Date.now();
     var dt = (now - lastTime)/1000.0;
 
     update(dt);
+    checkCollisions();
     render();
 //    console.log(characters[0].pos,characters[1].pos);
     lastTime = Date.now();
     window.requestAnimationFrame(main);
+    
+    gametime+=dt;
+    ctx.font = "30px Arial";
+    ctx.fillStyle = "#000000";
+    ctx.fillText(Math.floor(gametime), 10,50);
+    if (gametime > 10) gameover();
 };
 
 window.requestAnimationFrame(main);
