@@ -184,7 +184,6 @@ function boxCollides(pos1, size1, pos2, size2) {
 
 function checkCollisions() {
     checkPlayerBounds();
-
     if (boxCollides(characters[0].pos, characters[0].sprite.size, characters[1].pos, characters[1].sprite.size)) {
         console.log("collision!");
     }
@@ -201,7 +200,7 @@ function main(){
     update(dt);
     checkCollisions();
     render();
-//    console.log(characters[0].pos,characters[1].pos);
+    
     lastTime = Date.now();
     window.requestAnimationFrame(main);
     
