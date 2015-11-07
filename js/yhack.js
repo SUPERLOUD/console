@@ -28,6 +28,7 @@ var syncanoChannel = "todo-list";
 var jumplimiter0 = 0;
 var jumplimiter1 = 0;
 
+var gameover = false;
 var gametime = 0;
 
 
@@ -73,11 +74,13 @@ function init(){
     background = resources.get('../static/bkgrd.png');
     characters.push({
 	pos:[200,360],
-	sprite: new Sprite('../static/Cube.bmp',[0,0],[24,28],4,[0,1,2,0])
+	sprite: new Sprite('../static/Cube.bmp',[0,0],[24,28],4,[0,1,2,0]),
+        HP:400
     });
     characters.push({
 	pos:[1000,360],
-	sprite: new Sprite('../static/Cube.bmp',[0,27],[24,28],4,[0,1,2,0])
+	sprite: new Sprite('../static/Cube.bmp',[0,27],[24,28],4,[0,1,2,0]),
+        HP:400
     });
     ctx.drawImage(background,0,0,1280,720);
     lastTime = Date.now();
@@ -93,7 +96,6 @@ function update(dt){
         characters[i].pos[1] += playerSpeed/80;
     }
 }
-
 
 function render(){
     ctx.fillRect(0,0,1280,720);
@@ -188,11 +190,23 @@ function checkCollisions() {
 
     if (boxCollides(characters[0].pos, characters[0].sprite.size, characters[1].pos, characters[1].sprite.size)) {
         console.log("collision!");
+        
+        characters[0].HP--;
+        characters[1].HP--;
     }
 }
 
-function gameover() {
+function drawthings() {
+    ctx.font = "30px Arial";
+    ctx.fillStyle = "#000000";
+    ctx.fillText(Math.floor(gametime),10,50);
+    ctx.fillRect(10,80,characters[0].HP,10);
+    ctx.fillRect(canVas.width/2,80,characters[1].HP,10);
+}
+
+function printgameover() {
     ctx.fillText("GAME OVER", canVas.width/2, canVas.height/2);
+    console.log("GAME OVER");
 }
 
 function main(){
@@ -204,13 +218,19 @@ function main(){
     render();
 //    console.log(characters[0].pos,characters[1].pos);
     lastTime = Date.now();
-    window.requestAnimationFrame(main);
+    
+    if (!gameover) window.requestAnimationFrame(main);
     
     gametime+=dt;
-    ctx.font = "30px Arial";
-    ctx.fillStyle = "#000000";
-    ctx.fillText(Math.floor(gametime), 10,50);
-    if (gametime > 10) gameover();
+    drawthings();
+    if (characters[0].HP <= 0 || characters[1].HP <= 0) {
+        gameover = true;
+        printgameover();
+    }
+    if (gametime > 90) {
+        gameover = true;
+        printgameover();
+    }
 };
 
 window.requestAnimationFrame(main);
