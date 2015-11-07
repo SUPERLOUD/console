@@ -112,7 +112,6 @@ function renderEach(entity){
 }
 
 function handleInput(dt){
-<<<<<<< HEAD
     if((input.isDown("UP")||playerAction[0][0])&&jumplimiter0<10){
 	characters[0].pos[1] -= playerSpeed[0] * dt * 5;
 	jumplimiter0++;
