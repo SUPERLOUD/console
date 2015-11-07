@@ -35,7 +35,7 @@ resources.onReady(init);
 
 function init(){
     console.log("happening..um what!");
-    background = resources.get('../static/bkgrd.png');
+//    background = resources.get('../static/bkgrd.png');
     characters.push({
 	pos:[200,360],
 	sprite: new Sprite('../static/Cube.bmp',[0,0],[24,28],4,[0,1,2,0])
@@ -44,7 +44,7 @@ function init(){
 	pos:[1000,360],
 	sprite: new Sprite('../static/Cube.bmp',[0,27],[24,28],4,[0,1,2,0])
     });
-    ctx.drawImage(background,0,0,1280,720);
+//    ctx.drawImage(background,0,0,1280,720);
     lastTime = Date.now();
     main();
     
@@ -59,6 +59,7 @@ function update(dt){
 
 
 function render(){
+    ctx.fillStyle="#FFFFFF";
     ctx.fillRect(0,0,1280,720);
     for(var i = 0;i<characters.length;i++){
 	renderEach(characters[i]);
@@ -66,7 +67,7 @@ function render(){
 }
 
 function renderEach(entity){
-    console.log(":",characters[0].pos,characters[1].pos);
+//    console.log(":",characters[0].pos,characters[1].pos);
     ctx.save();
     ctx.translate(entity.pos[0],entity.pos[1]);
     entity.sprite.render(ctx);
@@ -110,7 +111,7 @@ function main(){
 
     update(dt);
     render();
-    console.log(characters[0].pos,characters[1].pos);
+//    console.log(characters[0].pos,characters[1].pos);
     lastTime = Date.now();
     window.requestAnimationFrame(main);
 };
