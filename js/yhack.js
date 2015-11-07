@@ -145,8 +145,8 @@ function main(){
     var dt = (now - lastTime)/1000.0;
 
     update(dt);
-    render();
     checkPlayerBounds();
+    render();
 //    console.log(characters[0].pos,characters[1].pos);
     lastTime = Date.now();
     window.requestAnimationFrame(main);
