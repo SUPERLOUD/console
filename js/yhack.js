@@ -7,22 +7,47 @@ var ctx = canVas.getContext("2d");
 var lastTime; 
 var background;
 var characters = [];
-var playerSpeed = 200;
+var playerSpeed = [200,200];
+// [up,left,down,right,A,B]
+var playerAction = [[false,false,false,false,false,false],
+		    [false,false,false,false,false,false]];
+
+//var syncanoKey = "2d2f7c0e75b16769aadb93a2a28111117d43deb5";
+//var instanceKey = "dark-snowflake-7198";
+//var syncanoChannel = "super-loud";
+
+var syncanoKey = "b52cb72f9b01c614d882bc5712a3f32b97cb9001";
+var instanceKey = "todolist";
+var syncanoChannel = "todo-list";
 
 var syncano = new Syncano({
-	apiKey: "2d2f7c0e75b16769aadb93a2a28111117d43deb5",
-	instance: "dark-snowflake-7198",
-	userKey: "680405847ef8175e53ee7c834fd9e27ca6312d22"
+    apiKey: syncanoKey,
+    instance: instanceKey,
+    userKey: "680405847ef8175e53ee7c834fd9e27ca6312d22"
 });
 
 
 (function watch(){
-    syncano.channel("super-loud").poll()
+    syncano.channel(syncanoChannel).poll()
 	.then(function(res){
 	    if(res==="NO CONTENT"){
 		watch();
-	    }else if(res.action==="update"){
-		console.log(res);
+	    }else if(res.action==="update"&&res.payload){
+		console.log(res.payload);
+		console.log(res.payload.id,res.payload.iscompleted);
+		var val = res.payload.iscompleted;
+		switch(res.payload.id){
+		case 8100: playerAction[0][0] = val; break;
+		case 8102: playerAction[0][1] = val; break;
+		case 8103: playerAction[0][2] = val; break;
+		case 8104: playerAction[0][3] = val; break;
+		case 8105: playerAction[1][0] = val; break;
+		case 8106: playerAction[1][1] = val; break;
+		case 8107: playerAction[1][2] = val; break;
+		case 8108: playerAction[1][3] = val; break;
+		default: break;
+		}
+		
 		watch();
 	    }
 	}).catch(function(err){
@@ -35,7 +60,7 @@ resources.onReady(init);
 
 function init(){
     console.log("happening..um what!");
-//    background = resources.get('../static/bkgrd.png');
+    background = resources.get('../static/bkgrd.png');
     characters.push({
 	pos:[200,360],
 	sprite: new Sprite('../static/Cube.bmp',[0,0],[24,28],4,[0,1,2,0])
@@ -44,7 +69,7 @@ function init(){
 	pos:[1000,360],
 	sprite: new Sprite('../static/Cube.bmp',[0,27],[24,28],4,[0,1,2,0])
     });
-//    ctx.drawImage(background,0,0,1280,720);
+    ctx.drawImage(background,0,0,1280,720);
     lastTime = Date.now();
     main();
     
@@ -59,7 +84,6 @@ function update(dt){
 
 
 function render(){
-    ctx.fillStyle="#FFFFFF";
     ctx.fillRect(0,0,1280,720);
     for(var i = 0;i<characters.length;i++){
 	renderEach(characters[i]);
@@ -75,22 +99,22 @@ function renderEach(entity){
 }
 
 function handleInput(dt){
-    if(input.isDown("DOWN"))
-	characters[0].pos[1] += playerSpeed * dt;
-    if(input.isDown("s"))
-	characters[1].pos[1] += playerSpeed * dt;
-    if(input.isDown("LEFT"))
-	characters[0].pos[0] -= playerSpeed * dt;
-    if(input.isDown("a"))
-	characters[1].pos[0] -= playerSpeed * dt;
-    if(input.isDown("RIGHT"))
-	characters[0].pos[0] += playerSpeed * dt;
-    if(input.isDown("d"))
-	characters[1].pos[0] += playerSpeed * dt;
-    if(input.isDown("UP"))
-	characters[0].pos[1] -= playerSpeed * dt;
-    if(input.isDown("w"))
-	characters[1].pos[1] -= playerSpeed * dt;
+    if(input.isDown("UP")||playerAction[0][0])
+	characters[0].pos[1] -= playerSpeed[0] * dt;
+    if(input.isDown("LEFT")||playerAction[0][1])
+	characters[0].pos[0] -= playerSpeed[0] * dt;
+    if(input.isDown("DOWN")||playerAction[0][2])
+	characters[0].pos[1] += playerSpeed[0] * dt;
+    if(input.isDown("RIGHT")||playerAction[0][3])
+	characters[0].pos[0] += playerSpeed[0] * dt;
+    if(input.isDown("w")||playerAction[1][0])
+	characters[1].pos[1] -= playerSpeed[1] * dt;
+    if(input.isDown("a")||playerAction[1][1])
+	characters[1].pos[0] -= playerSpeed[1] * dt;
+    if(input.isDown("s")||playerAction[1][2])
+	characters[1].pos[1] += playerSpeed[1] * dt;
+    if(input.isDown("d")||playerAction[1][3])
+	characters[1].pos[0] += playerSpeed[1] * dt;
 
 }
 
