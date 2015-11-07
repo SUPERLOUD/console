@@ -7,7 +7,10 @@ var ctx = canVas.getContext("2d");
 var lastTime; 
 var background;
 var characters = [];
-var playerSpeed = 200;
+var playerSpeed = 400;
+
+var jumplimiter0 = 0;
+var jumplimiter1 = 0;
 
 var syncano = new Syncano({
 	apiKey: "2d2f7c0e75b16769aadb93a2a28111117d43deb5",
@@ -54,6 +57,7 @@ function update(dt){
     handleInput(dt);
     for(var i = 0;i<characters.length;i++){
 	characters[i].sprite.update(dt);
+        characters[i].pos[1] += playerSpeed/80;
     }
 }
 
@@ -75,10 +79,11 @@ function renderEach(entity){
 }
 
 function handleInput(dt){
-    if(input.isDown("DOWN"))
-	characters[0].pos[1] += playerSpeed * dt;
-    if(input.isDown("s"))
-	characters[1].pos[1] += playerSpeed * dt;
+    //if(input.isDown("DOWN"))
+	//characters[0].pos[1] += playerSpeed * dt;
+    //if(input.isDown("s"))
+	//characters[1].pos[1] += playerSpeed * dt;
+        
     if(input.isDown("LEFT"))
 	characters[0].pos[0] -= playerSpeed * dt;
     if(input.isDown("a"))
@@ -87,10 +92,16 @@ function handleInput(dt){
 	characters[0].pos[0] += playerSpeed * dt;
     if(input.isDown("d"))
 	characters[1].pos[0] += playerSpeed * dt;
-    if(input.isDown("UP"))
-	characters[0].pos[1] -= playerSpeed * dt;
-    if(input.isDown("w"))
-	characters[1].pos[1] -= playerSpeed * dt;
+    
+    //jump
+    if(input.isDown("UP") && jumplimiter0 < 10) {
+	characters[0].pos[1] -= playerSpeed * dt * 5;
+        jumplimiter0++;
+    }
+    if(input.isDown("w") && jumplimiter1 < 10) {
+	characters[1].pos[1] -= playerSpeed * dt * 5;
+        jumplimiter1++;
+    }
 
 }
 
@@ -105,12 +116,37 @@ var requestAnimFrame = (function(){
         };
 })();
 
+function checkPlayerBounds() {
+    //character 0 x coordinates
+    if (characters[0].pos[0] < 0) characters[0].pos[0] = 0;
+    
+    if (characters[0].pos[0] > canVas.width - characters[0].sprite.size[0]) characters[0].pos[0] = canVas.width - characters[0].sprite.size[0];
+    
+    //character 0 floor and reset jump
+    if (characters[0].pos[1] > canVas.height - characters[0].sprite.size[1]) {
+        characters[0].pos[1] = canVas.height - characters[0].sprite.size[1];
+        if (jumplimiter0 > 0) jumplimiter0 = 0;
+    }
+    
+    //character 1 x coordinates
+    if (characters[1].pos[0] < 0) characters[1].pos[0] = 0;
+    
+    if (characters[1].pos[0] > canVas.width - characters[1].sprite.size[0]) characters[1].pos[0] = canVas.width - characters[1].sprite.size[0];
+    
+    //character 1 floor and reset jump
+    if (characters[1].pos[1] > canVas.height - characters[1].sprite.size[1]) {
+        characters[1].pos[1] = canVas.height - characters[1].sprite.size[1];
+        if (jumplimiter1 > 0) jumplimiter1 = 0;
+    }
+}
+
 function main(){
     var now = Date.now();
     var dt = (now - lastTime)/1000.0;
 
     update(dt);
     render();
+    checkPlayerBounds();
 //    console.log(characters[0].pos,characters[1].pos);
     lastTime = Date.now();
     window.requestAnimationFrame(main);
