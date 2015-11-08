@@ -408,6 +408,10 @@ function handleInput(dt){
             scale: 1
         });
     }
+    if(characters[0].power > 50 || characters[1].power > 50){
+	shakeIt = true;
+	
+    }
     if(input.isDown(",")||playerAction[1][4]){}
     if(input.isDown(".")||playerAction[1][5]){}
 }
