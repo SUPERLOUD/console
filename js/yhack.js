@@ -97,8 +97,7 @@ resources.load(['../static/bkgrd.jpg',
                 '../static/p2 stand.png',
                 '../static/p2 stand flipped.png',
                 '../static/explosion.png',
-		'../static/punch.png',
-		'../static/punch flipped.png']);
+		'../static/punchhit.png']);
 resources.onReady(getReady);
 function getReady(){
     var topX = 500;
@@ -219,9 +218,9 @@ function update(dt){
         characters[i].pos[1] += gravityspeed[i];
 	characters[i].power = playerAction[i][6];
     }
-
+    
     for(var i = 0;i<punches[0].length;i++){
-	if(Date.now()-punches[0][i].DOB > 1000){
+	if(Date.now()-punches[0][i].DOB > 300){
 	    console.log('punch you too old!');
 	    punches[0].splice(i,1);
 	}
@@ -231,20 +230,22 @@ function update(dt){
 	}
     }
     for(var i = 0;i<punches[1].length;i++){
-	if(Date.now()-punches[1][i].DOB > 1000)
+	if(Date.now()-punches[1][i].DOB > 300)
 	    punches[1].splice(i,1);
 	else{
 	    punches[1][i].pos = characters[1].pos;
 	    punches[1][i].sprite[0].update(dt);
 	}
+    }
     for (var i = 0; i < projectiles.length; i++) {
         var dir = 1;
         if (projectiles[i].direction == 0) {
-            dir = -1;
+	    dir = -1;
         }
         projectiles[i].pos[0] += projectiles[i].speed * dt * dir;
     }
 }
+
 
 function render(){
     ctx.fillRect(0,0,1280,720);
@@ -256,7 +257,6 @@ function render(){
         renderEachProjectile(projectiles[i]);
     }
     for(var i = 0;i<punches[0].length;i++){
-	console.log("here some punches");
 	renderEach(punches[0][i],0);
     }
     for(var i = 0;i<punches[1].length;i++){
@@ -331,7 +331,27 @@ function handleInput(dt){
     if(input.isDown("s")||playerAction[1][2]) {
         playerSpeedy[1] = playerSpeed[1] * dt;
     }
-    if(input.isDown("h")||playerAction[0][5]){}
+    
+    //left right movement and direction    
+    if(input.isDown("a")||playerAction[1][1]) {
+        playerSpeedx[1] = playerSpeed[1] * dt * -1;
+        directions[1] = 0;
+    }
+    else if(input.isDown("d")||playerAction[1][3]) {
+        playerSpeedx[1] = playerSpeed[1] * dt;
+        directions[1] = 1;
+    }
+    
+    else if (input.getlastkey() == "A") {
+        playerSpeedx[1] = 0;
+        directions[1] = 2;
+    }
+    else if (input.getlastkey() == "D") {
+        playerSpeedx[1] = 0;
+        directions[1] = 3;
+    }
+    else playerSpeedx[1] = 0;
+    
     if(input.isDown("n")|| playerAction[1][4]){
     	if(Date.now() - lastFire > 100){
 	    var pSizeX = characters[1].sprite[0].size[0];
@@ -347,33 +367,10 @@ function handleInput(dt){
 			     sprite:[new Sprite("../static/explosion.png",[0,0],[50,50],1,[0])],
 			     DOB:Date.now()
 			    });
-	    
 	}
 	lastFire = Date.now();
     }
     
-    if(input.isDown("m")||playerAction[1][5]){}
-
-    //left right movement and direction    
-    if(input.isDown("a")||playerAction[1][1]) {
-        playerSpeedx[1] = playerSpeed[1] * dt * -1;
-        directions[1] = 0;
-    }
-    else if(input.isDown("d")||playerAction[1][3]) {
-        playerSpeedx[1] = playerSpeed[1] * dt;
-        directions[1] = 1;
-    }
-
-    else if (input.getlastkey() == "A") {
-        playerSpeedx[1] = 0;
-        directions[1] = 2;
-    }
-    else if (input.getlastkey() == "D") {
-        playerSpeedx[1] = 0;
-        directions[1] = 3;
-    }
-    else playerSpeedx[1] = 0;
-
     if(input.isDown("g")|| playerAction[0][4]){
 	if(Date.now() - lastFire > 100){
 	    var pSizeX = characters[0].sprite[0].size[0];
@@ -408,16 +405,16 @@ function handleInput(dt){
     if(input.isDown(",")||playerAction[1][4]){}
     if(input.isDown(".")||playerAction[1][5]){}
 }
-
-//update character positions based on their speeds
-function updatepositions() {
+    
+    //update character positions based on their speeds
+    function updatepositions() {
     characters[0].pos[0] += playerSpeedx[0] + knockbackSpeedx[0];
     characters[0].pos[1] += playerSpeedy[0] + knockbackSpeedy[0];
     characters[1].pos[0] += playerSpeedx[1] + knockbackSpeedx[1];
     characters[1].pos[1] += playerSpeedy[1] + knockbackSpeedy[1];
 }
 
-var requestAnimFrame = function(){
+    var requestAnimFrame = function(){
     return window.requestAnimationFrame       ||
         window.webkitRequestAnimationFrame ||
         window.mozRequestAnimationFrame    ||
@@ -504,7 +501,7 @@ function collides(x, y, r, b, x2, y2, r2, b2) {
              b <= y2 || y > b2);
 }
 
-function boxCollides(pos1, size1, pos2, size2) {
+    function boxCollides(pos1, size1, pos2, size2) {
     return collides(pos1[0], pos1[1],
                     pos1[0] + size1[0], pos1[1] + size1[1],
                     pos2[0], pos2[1],
@@ -521,7 +518,7 @@ function checkCollisions() {
     }
 }
 
-function drawthings() {
+    function drawthings() {
     //game time
     //ctx.font = "30px Arial";
     //ctx.fillStyle = "#000000";
@@ -582,12 +579,8 @@ function drawthings() {
     ctx.restore();
 }
 
-function foo(){
-    characters[0].power++;
-    characters[1].power++;    
-    console.log(characters[0].power,characters[1].power);
-}
-function printgameover() {
+
+    function printgameover() {
     ctx.save();
     ctx.fillStyle = "rgba(50,50,50,.4)";
     ctx.fillRect(0,0,canVas.width,canVas.height);
@@ -597,7 +590,7 @@ function printgameover() {
     getReady();
 }
 
-function main(){
+    function main(){
     var now = Date.now();
     var dt = (now - lastTime)/1000.0;
     
