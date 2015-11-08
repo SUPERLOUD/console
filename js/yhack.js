@@ -16,6 +16,10 @@ var explosion;
 var characters = [];
 var entities = [];
 var playerSpeed = [200,200];
+var playerSpeedx = [0,0];
+var playerSpeedy = [0,0];
+var knockbackSpeedx = [0,0];
+var knockbackSpeedy = [0,0];
 var gravityspeed = [0,0];
 // [up,left,down,right,A,B]
 var playerAction = [[false,false,false,false,false,false],
@@ -140,6 +144,10 @@ function getReady(){
 	    characters = [];
 	    //	entities = [];
 	    playerSpeed = [200,200];
+            playerSpeedx = [0,0];
+            playerSpeedy = [0,0];
+            knockbackSpeedx = [0,0];
+            knockbackSpeedy = [0,0];
 	    playerAction = [[false,false,false,false,false,false],
 			    [false,false,false,false,false,false]];
 
@@ -184,10 +192,14 @@ function init(){
 
 function update(dt){
     handleInput(dt);
+    updatepositions();
     for(var i = 0;i<characters.length;i++){
 	characters[i].sprite[directions[i]].update(dt);
         //gravity
-        characters[i].pos[1] += gravityspeed[i];
+        //characters[i].pos[1] += gravityspeed[i];
+        playerSpeedy[i] += gravityspeed[i];
+        knockbackSpeedy[0] += .25;
+        knockbackSpeedy[1] += .25;
     }
 }
 
@@ -207,52 +219,82 @@ function renderEach(entity,i){
 }
 
 function handleInput(dt){
-    
     //player 1
     if((input.isDown("UP")||playerAction[0][0])&&jumplimiter[0]<10){
-	characters[0].pos[1] -= playerSpeed[0] * dt * 5;
+	//characters[0].pos[1] -= playerSpeed[0] * dt * 5;
+        playerSpeedy[0] = playerSpeed[0] * dt * -5;
 	jumplimiter[0]++;
     }
     else if (jumplimiter[0] > 0) {
         jumplimiter[0] = 10;
-        gravityspeed[0]++;
+        gravityspeed[0] += .25;
     }
-    if(input.isDown("DOWN")||playerAction[0][2])
-	characters[0].pos[1] += playerSpeed[0] * dt;
+    if(input.isDown("DOWN")||playerAction[0][2]) {
+	//characters[0].pos[1] += playerSpeed[0] * dt;
+        playerSpeedy[0] = playerSpeed[0] * dt;
+    }
     
     if(input.isDown("LEFT")||playerAction[0][1]) {
-	characters[0].pos[0] -= playerSpeed[0] * dt;
+	//characters[0].pos[0] -= playerSpeed[0] * dt;
+        playerSpeedx[0] = playerSpeed[0] * dt * -1;
         directions[0] = 0;
     }
     else if(input.isDown("RIGHT")||playerAction[0][3]) {
-	characters[0].pos[0] += playerSpeed[0] * dt;
+	//characters[0].pos[0] += playerSpeed[0] * dt;
+        playerSpeedx[0] = playerSpeed[0] * dt;
         directions[0] = 1;
     }
-    else if (input.getlastkey() == "LEFT") directions[0] = 2;
-    else if (input.getlastkey() == "RIGHT") directions[0] = 3;
+    else if (input.getlastkey() == "LEFT") {
+        playerSpeedx[0] = 0;
+        directions[0] = 2;
+    }
+    else if (input.getlastkey() == "RIGHT") {
+        playerSpeedx[0] = 0;
+        directions[0] = 3;
+    }
+    else playerSpeedx[0] = 0;
     
     //player 2
     if((input.isDown("w")||playerAction[1][0])&&jumplimiter[1]<10){
-	characters[1].pos[1] -= playerSpeed[1] * dt * 5;
+	//characters[1].pos[1] -= playerSpeed[1] * dt * 5;
+        playerSpeedy[1] = playerSpeed[1] * dt * -5;
 	jumplimiter[1]++;
     }
     else if (jumplimiter[1] > 0) {
         jumplimiter[1] = 10;
-        gravityspeed[1]++;
+        gravityspeed[1] += .25;
     }
-    if(input.isDown("s")||playerAction[1][2])
-	characters[1].pos[1] += playerSpeed[1] * dt;
+    if(input.isDown("s")||playerAction[1][2]) {
+	//characters[1].pos[1] += playerSpeed[1] * dt;
+        playerSpeedy[1] = playerSpeed[1] * dt;
+    }
     
     if(input.isDown("a")||playerAction[1][1]) {
-	characters[1].pos[0] -= playerSpeed[1] * dt;
+	//characters[1].pos[0] -= playerSpeed[1] * dt;
+        playerSpeedx[1] = playerSpeed[1] * dt * -1;
         directions[1] = 0;
     }
     else if(input.isDown("d")||playerAction[1][3]) {
-	characters[1].pos[0] += playerSpeed[1] * dt;
+	//characters[1].pos[0] += playerSpeed[1] * dt;
+        playerSpeedx[1] = playerSpeed[1] * dt;
         directions[1] = 1;
     }
-    else if (input.getlastkey() == "A") directions[1] = 2;
-    else if (input.getlastkey() == "D") directions[1] = 3;
+    else if (input.getlastkey() == "A") {
+        playerSpeedx[1] = 0;
+        directions[1] = 2;
+    }
+    else if (input.getlastkey() == "D") {
+        playerSpeedx[1] = 0;
+        directions[1] = 3;
+    }
+    else playerSpeedx[1] = 0;
+}
+
+function updatepositions() {
+    characters[0].pos[0] += playerSpeedx[0] + knockbackSpeedx[0];
+    characters[0].pos[1] += playerSpeedy[0] + knockbackSpeedy[0];
+    characters[1].pos[0] += playerSpeedx[1] + knockbackSpeedx[1];
+    characters[1].pos[1] += playerSpeedy[1] + knockbackSpeedy[1];
 }
 
 var requestAnimFrame = function(){
@@ -275,8 +317,11 @@ function checkPlayerBounds() {
 	characters[0].pos[0] = canVas.width - characters[0].sprite[0].size[0]*scaleFactor;
     
     //character 0 floor and reset jump and gravity speed
-    if (characters[0].pos[1] > canVas.height - characters[0].sprite[0].size[1]*scaleFactor) {
+    if (characters[0].pos[1] >= canVas.height - characters[0].sprite[0].size[1]*scaleFactor) {
         characters[0].pos[1] = canVas.height - characters[0].sprite[0].size[1]*scaleFactor;
+        playerSpeedy[0] = 0;
+        knockbackSpeedx[0] = 0;
+        knockbackSpeedy[0] = 0;
         if (jumplimiter[0] > 0) {
 	    jumplimiter[0] = 0;
             gravityspeed[0] = 0;
@@ -291,8 +336,11 @@ function checkPlayerBounds() {
 	characters[1].pos[0] = canVas.width - characters[1].sprite[0].size[0]*scaleFactor;
     
     //character 1 floor and reset jump
-    if (characters[1].pos[1] > canVas.height - characters[1].sprite[0].size[1]*scaleFactor) {
+    if (characters[1].pos[1] >= canVas.height - characters[1].sprite[0].size[1]*scaleFactor) {
         characters[1].pos[1] = canVas.height - characters[1].sprite[0].size[1]*scaleFactor;
+        playerSpeedy[1] = 0;
+        knockbackSpeedx[1] = 0;
+        knockbackSpeedy[1] = 0;
         if (jumplimiter[1] > 0) {
 	    jumplimiter[1] = 0;
             gravityspeed[1] = 0;
@@ -306,6 +354,20 @@ function dealdamage(target,damage) {
     ctx.fillStyle = "#FF0000";
     ctx.drawImage(explosion,characters[target].pos[0],characters[target].pos[1]-characters[target].sprite[0].size[0]/2,40,40);
     ctx.fillText(damage,characters[target].pos[0]+10,characters[target].pos[1]+5);
+    
+    knockbackleft(target,damage);
+}
+
+function knockbackleft(target,damage) {
+    knockbackSpeedx[target] = damage * -1;
+    knockbackSpeedy[target] = damage * -1 / 2;
+    jumplimiter[target] = 10;
+}
+
+function knockbackright(target,damage) {
+    knockbackSpeedx[target] = damage;
+    knockbackSpeedy[target] = damage * -1 / 2;
+    jumplimiter[target] = 10;
 }
 
 function collides(x, y, r, b, x2, y2, r2, b2) {
@@ -327,7 +389,7 @@ function checkCollisions() {
 		    characters[1].pos,
 		    characters[1].sprite[0].size)) {
         dealdamage(0,1);
-        dealdamage(1,10);
+        dealdamage(1,50);
     }
 }
 
