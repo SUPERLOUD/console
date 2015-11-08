@@ -98,7 +98,8 @@ resources.load(['../static/bkgrd.jpg',
                 '../static/p2 stand.png',
                 '../static/p2 stand flipped.png',
                 '../static/explosion.png',
-		'../static/punchhit.png']);
+		'../static/punchhit.png',
+                '../static/punchhit flipped.png']);
 resources.onReady(getReady);
 function getReady(){
     var topX = 500;
@@ -206,6 +207,9 @@ function init(){
     });
     ctx.drawImage(background,0,0,1280,720);
     lastTime = Date.now();
+    
+    damages = [];
+    projectiles = [];
 }
 
 function update(dt){
@@ -377,15 +381,15 @@ function handleInput(dt){
 	if(Date.now() - lastFire > 100){
 	    var pSizeX = characters[0].sprite[0].size[0];
 	    var pSizeY = characters[0].sprite[0].size[1];
-	    var file = "../static/punch.png";
-	    if(input.getlastkey() == "A"){
+	    var file = "../static/punchhit.png";
+	    if(directions[1] % 2 == 0){
 		pSizeX = -pSizeX;
-		file = "../static/punch flipped.png";
+		file = "../static/punchhit flipped.png";
 	    }
-	    var x = characters[0].pos[0] + pSizeX;
-	    var y = characters[0].pos[1] + pSizeY;
+	    var x = characters[1].pos[0] - 50;
+	    var y = characters[1].pos[1] - 33;
 	    punches[0].push({pos:[x,y],
-			     sprite:[new Sprite("../static/explosion.png",[0,0],[50,50],1,[0])],
+			     sprite:[new Sprite(file,[0,0],[50,33],1,[0])],
 			     DOB:Date.now()
 			    });
 	    
@@ -398,7 +402,7 @@ function handleInput(dt){
         var projectileX = projectileDirection == 0 ? (characters[1].pos[0]) : (characters[1].pos[0] + characters[0].sprite[0].size[0]*scaleFactor);
         projectiles.push({
             direction: projectileDirection,
-            pos: [projectileX, characters[1].pos[1]],
+            pos: [projectileX-20, characters[1].pos[1]+30],
             damage: 5,
             speed: 300,
             scale: 1
@@ -481,20 +485,21 @@ function dealdamage(target,damage) {
     
     characters[target].HP -= damage;
     
-    knockbackleft(target,damage);
+    if (directions[target] % 2 == 0) knockbackright(target,damage);
+    else knockbackleft(target,damage);
 }
 
 //knockback and disable jump until floor
 function knockbackleft(target,damage) {
-    knockbackSpeedx[target] = damage * -1;
-    knockbackSpeedy[target] = damage * -1 / 2;
+    knockbackSpeedx[target] += damage * -1;
+    knockbackSpeedy[target] += damage * -1 / 2;
     jumplimiter[target] = 10;
 }
 
 //knockback and disable jump until floor
 function knockbackright(target,damage) {
-    knockbackSpeedx[target] = damage;
-    knockbackSpeedy[target] = damage * -1 / 2;
+    knockbackSpeedx[target] += damage;
+    knockbackSpeedy[target] += damage * -1 / 2;
     jumplimiter[target] = 10;
 }
 
@@ -503,11 +508,11 @@ function collides(x, y, r, b, x2, y2, r2, b2) {
              b <= y2 || y > b2);
 }
 
-    function boxCollides(pos1, size1, pos2, size2) {
+function boxCollides(pos1, size1, pos2, size2) {
     return collides(pos1[0], pos1[1],
-                    pos1[0] + size1[0], pos1[1] + size1[1],
+                    pos1[0] + size1[0]*scaleFactor*.6, pos1[1] + size1[1]*scaleFactor*.6,
                     pos2[0], pos2[1],
-                    pos2[0] + size2[0], pos2[1] + size2[1]);
+                    pos2[0] + size2[0]*scaleFactor*.6, pos2[1] + size2[1]*scaleFactor*.6);
 }
 
 function checkCollisions() {
@@ -517,6 +522,16 @@ function checkCollisions() {
 		    characters[1].pos,
 		    characters[1].sprite[0].size)) {
         dealdamage(0,200);
+    }
+    
+    for (var i = 0; i < projectiles.length; i++) {
+        if (boxCollides(characters[0].pos,
+                        characters[0].sprite[0].size,
+                        projectiles[i].pos,
+                        [30,30])) {
+                            dealdamage(0,1 + characters[1].power/5);
+                            projectiles.shift();
+                        }
     }
 }
 

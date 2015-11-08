@@ -48,6 +48,8 @@
                           this.size[0], this.size[1],
                           0, 0,
                           this.size[0]*3, this.size[1]*sF);
+                          
+            console.log(this.url);
 	   
         }
     };
