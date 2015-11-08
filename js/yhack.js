@@ -16,7 +16,7 @@ var background;
 var explosion;
 var characters = [];
 var entities = [];
-var punches = [];
+var punches = [[],[]];
 var playerSpeed = [200,200];
 var gravityspeed = [0,0];
 // [up,left,down,right,A,B]
@@ -265,9 +265,27 @@ function handleInput(dt){
     else if (input.getlastkey() == "A") directions[1] = 2;
     else if (input.getlastkey() == "D") directions[1] = 3;
 
-    if(input.isDown("g")| playerAction[0][4]){}
+    if(input.isDown("g")|| playerAction[0][4]){
+	if(Date.now() - lastFire > 100){
+	    var pSizeX = characters[0].sprite[0].size[0]/2;
+	    var pSizeY = characters[0].sprite[0].size[1]/2;
+	    var file = "static/punch.png";
+	    if(input.getlastkey() == "A"){
+		pSizeX = -pSizeX;
+		file = "static/punch flipped.png";
+	    var x = characters[0].pos[0] + pSizeX;
+	    var y = characters[1].pos[1] + pSizeY;
+	    punches[0].push({pos:[x,y],
+			     dir:input.getlastkey(),
+			     sprite:new Sprite(file,[200,122],[0]),
+			     DOB:Date.now()
+			    });
+		
+	    }
+	}
+    }
     if(input.isDown("h")||playerAction[0][5]){}
-    if(input.isDown(",")| playerAction[1][4]){}
+    if(input.isDown(",")|| playerAction[1][4]){}
     if(input.isDown(".")||playerAction[1][5]){}
     
 }
