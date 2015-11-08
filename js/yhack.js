@@ -114,7 +114,6 @@ function renderEach(entity){
 }
 
 function handleInput(dt){
-<<<<<<< HEAD
     if((input.isDown("UP")||playerAction[0][0])&&jumplimiter0<10){
 	characters[0].pos[1] -= playerSpeed[0] * dt * 5;
 	jumplimiter0++;
@@ -201,7 +200,9 @@ function drawthings() {
     ctx.fillStyle = "#000000";
     ctx.fillText(Math.floor(gametime),10,50);
     ctx.fillRect(10,80,characters[0].HP,10);
+    ctx.fillText(characters[0].HP,420,90);
     ctx.fillRect(canVas.width/2,80,characters[1].HP,10);
+    ctx.fillText(characters[1].HP,canVas.width/2+420,90);
 }
 
 function printgameover() {
@@ -235,5 +236,3 @@ function main(){
 
 window.requestAnimationFrame(main);
 console.log("loaded yhack.js");
-
-
