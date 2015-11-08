@@ -12,6 +12,7 @@ ctx.drawImage(bg,0,0,1280,720);
 var lastTime; 
 var background;
 var characters = [];
+var entities = [];
 var playerSpeed = [200,200];
 // [up,left,down,right,A,B]
 var playerAction = [[false,false,false,false,false,false],
@@ -45,8 +46,6 @@ function watch(){
 		if(!gameover)
 		    watch();
 	    }else if(res.action==="update"&&res.payload){
-		console.log(res.payload);
-		console.log(res.payload.id,res.payload.iscompleted);
 		var val = res.payload.iscompleted;
 		switch(res.payload.id){
 		case 8100: playerAction[0][0] = val; break;
@@ -68,13 +67,84 @@ function watch(){
 }
 
 resources.load(['../static/bkgrd.png','../static/Cube.bmp']);
-resources.onReady(function(){
-    document.getElementById("startbutton").addEventListener("click",function(){
-	init();
-	watch();
-	window.requestAnimationFrame(main);
-    });
-});
+resources.onReady(getReady);
+function getReady(){
+    var topX = 500;
+    var topY = 300;
+    var bW = 240;
+    var bH = 80;
+    var dx = 65;
+    var dy = 59;
+    var hover = false;
+    var btnVal = "Start";
+    if(gameover){
+	topY = 500;
+	btnVal = "Try Again";
+	dx = 10;
+    }
+    ctx.fillStyle = "rgb(150,150,150)";
+    ctx.fillRect(topX,topY,bW,bH);
+    entities.push({x:topX,y:topY,width:bW,height:bH});
+    ctx.font = "50px Arial";
+    ctx.fillStyle = "rgb(50,50,50)";
+    ctx.fillText(btnVal,topX+dx,topY+dy);
+    entities.push({"x":topX+dx,'y':topY+dy,'width':-1,'height':-1});
+    canVas.onmousemove = function(e){
+	var x = e.pageX - canVas.offsetLeft;
+	var y = e.pageY - canVas.offsetTop;
+	if(x>entities[0].x && x<entities[0].x+entities[0].width&&
+	   y > entities[0].y && y < entities[0].y+entities[0].height){
+	    if(!hover){
+		ctx.fillStyle = "rgb(120,120,120)";
+		ctx.fillRect(topX,topY,bW,bH);
+		entities.push({x:topX,y:topY,width:bW,height:bH});
+		ctx.font = "50px Arial";
+		ctx.fillStyle = "rgb(50,50,50)";
+		ctx.fillText(btnVal,topX+dx,topY+dy);
+		hover = !hover;
+	    }
+	}
+	else{
+	    if(hover){
+		ctx.fillStyle = "rgb(150,150,150)";
+		ctx.fillRect(topX,topY,bW,bH);
+		entities.push({x:topX,y:topY,width:bW,height:bH});
+		ctx.font = "50px Arial";
+		ctx.fillStyle = "rgb(50,50,50)";
+		ctx.fillText(btnVal,topX+dx,topY+dy);
+		hover = !hover;
+	    }
+	}
+    };
+    canVas.onclick = function(e){
+	var x = e.pageX - canVas.offsetLeft;
+	var y = e.pageY - canVas.offsetTop;
+	if(x>entities[0].x && x<entities[0].x+entities[0].width&&
+	   y > entities[0].y && y < entities[0].y+entities[0].height){
+	    ctx.drawImage(bg,0,0,1280,720);
+	
+	    lastTime = 0.0; 
+	    characters = [];
+	    //	entities = [];
+	    playerSpeed = [200,200];
+	    playerAction = [[false,false,false,false,false,false],
+			    [false,false,false,false,false,false]];
+
+	    jumplimiter0 = 10;
+	    jumplimiter1 = 10;
+	    
+	    gameover = false;
+	    gametime = 0;  
+
+	    init();
+//	    watch();
+	    window.requestAnimationFrame(main);
+	    entities= [];
+	    canVas.onclick = null;
+	    canVas.onmousemove = null;
+	}
+    }
+}
 
 function init(){
     background = resources.get('../static/bkgrd.png');
@@ -90,9 +160,6 @@ function init(){
     });
     ctx.drawImage(background,0,0,1280,720);
     lastTime = Date.now();
-//    main();
-    
-    document.getElementById("startbutton").style="visibility:hidden";
 }
 
 function update(dt){
@@ -116,11 +183,9 @@ function renderEach(entity){
     ctx.translate(entity.pos[0],entity.pos[1]);
     entity.sprite.render(ctx);
     ctx.restore();
-    console.log(entity.pos);
 }
 
 function handleInput(dt){
-    console.log("b:",characters[0].pos,characters[1].pos);
     if((input.isDown("UP")||playerAction[0][0])&&jumplimiter0<10){
 	characters[0].pos[1] -= playerSpeed[0] * dt * 5;
 	jumplimiter0++;
@@ -142,7 +207,6 @@ function handleInput(dt){
 	characters[1].pos[1] += playerSpeed[1] * dt;
     if(input.isDown("d")||playerAction[1][3])
 	characters[1].pos[0] += playerSpeed[1] * dt;
-    console.log("a:",characters[0].pos,characters[1].pos);
 }
 
 var requestAnimFrame = function(){
@@ -201,8 +265,7 @@ function boxCollides(pos1, size1, pos2, size2) {
 function checkCollisions() {
     checkPlayerBounds();
     if (boxCollides(characters[0].pos, characters[0].sprite.size, characters[1].pos, characters[1].sprite.size)) {
-        console.log("collision!");
-        
+//        console.log("collision!");        
         characters[0].HP--;
         characters[1].HP--;
     }
@@ -217,34 +280,38 @@ function drawthings() {
 }
 
 function printgameover() {
-    ctx.fillText("GAME OVER", canVas.width/2, canVas.height/2);
-    console.log("GAME OVER");
+    ctx.save();
+    ctx.fillStyle = "rgba(50,50,50,.4)";
+    ctx.fillRect(0,0,canVas.width,canVas.height);
+    ctx.restore();
+    ctx.font = "80px Arial";
+    ctx.fillText("GAME OVER", canVas.width/2-250, canVas.height/2);
+    getReady();
 }
-
 function main(){
     var now = Date.now();
     var dt = (now - lastTime)/1000.0;
     
-    console.log("before update:",characters[0].pos,characters[1].pos);
     update(dt);
-    console.log("after update:",characters[0].pos,characters[1].pos);
     checkCollisions();
     render();
     
     lastTime = Date.now();
-    
-    if (!gameover) window.requestAnimationFrame(main);
     
     gametime+=dt;
     drawthings();
     if (characters[0].HP <= 0 || characters[1].HP <= 0) {
         gameover = true;
         printgameover();
+	return;
     }
     if (gametime > 90) {
         gameover = true;
         printgameover();
+	return;
     }
+    if (!gameover)
+	window.requestAnimationFrame(main);  	
 };
 
 
