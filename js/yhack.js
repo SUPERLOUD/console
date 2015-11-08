@@ -250,6 +250,7 @@ function update(dt){
         }
         projectiles[i].pos[0] += projectiles[i].speed * dt * dir;
     }
+    jumplimiter = [characters[0].power%10+10,characters[1].power%10+10];
 }
 
 
@@ -273,7 +274,7 @@ function render(){
 function renderEach(entity,i){
     ctx.save();
     ctx.translate(entity.pos[0],entity.pos[1]);
-    entity.sprite[i].render(ctx,scaleFactor);
+    entity.sprite[i].render(ctx,scaleFactor+entity.power/25);
     ctx.restore();
 }
 
@@ -399,7 +400,7 @@ function handleInput(dt){
     
     if(input.isDown("h")||playerAction[0][5]){
         var projectileDirection = directions[1] - 2;
-        var projectileX = projectileDirection == 0 ? (characters[1].pos[0]) : (characters[1].pos[0] + characters[0].sprite[0].size[0]*scaleFactor);
+        var projectileX = projectileDirection == 0 ? (characters[1].pos[0]) : (characters[1].pos[0] + characters[0].sprite[0].size[0]*scaleFactor+characters[1].power/25);
         projectiles.push({
             direction: projectileDirection,
             pos: [projectileX-20, characters[1].pos[1]+30],
@@ -413,7 +414,17 @@ function handleInput(dt){
 	
     }
     if(input.isDown(",")||playerAction[1][4]){}
-    if(input.isDown(".")||playerAction[1][5]){}
+    if(input.isDown("m")||playerAction[1][5]){
+        var projectileDirection = directions[1] - 2;
+        var projectileX = projectileDirection == 0 ? (characters[0].pos[0]) : (characters[0].pos[0] + characters[0].sprite[0].size[0]*scaleFactor+characters[1].power/25);
+        projectiles.push({
+            direction: projectileDirection,
+            pos: [projectileX-20, characters[0].pos[1]+30],
+            damage: 5,
+            speed: 300,
+            scale: 1
+        });   
+    }
 }
     
     //update character positions based on their speeds
@@ -441,12 +452,12 @@ function checkPlayerBounds() {
     if (characters[0].pos[0] < 0)
 	characters[0].pos[0] = 0;
     
-    if (characters[0].pos[0] > canVas.width-flr - characters[0].sprite[0].size[0]*scaleFactor)
-	characters[0].pos[0] = canVas.width-flr - characters[0].sprite[0].size[0]*scaleFactor;
+    if (characters[0].pos[0] > canVas.width-flr - characters[0].sprite[0].size[0]*scaleFactor+characters[0].power/25)
+	characters[0].pos[0] = canVas.width-flr - characters[0].sprite[0].size[0]*scaleFactor+characters[0].power/25;
     
     //character 0 floor and reset jump, gravity speed, and knockback speed
-    if (characters[0].pos[1] >= canVas.height-flr - characters[0].sprite[0].size[1]*scaleFactor) {
-        characters[0].pos[1] = canVas.height-flr - characters[0].sprite[0].size[1]*scaleFactor;
+    if (characters[0].pos[1] >= canVas.height-flr - characters[0].sprite[0].size[1]*scaleFactor+characters[0].power/25) {
+        characters[0].pos[1] = canVas.height-flr - characters[0].sprite[0].size[1]*scaleFactor+characters[0].power/25;
         playerSpeedy[0] = 0;
         knockbackSpeedx[0] = 0;
         knockbackSpeedy[0] = 0;
@@ -461,12 +472,12 @@ function checkPlayerBounds() {
     if (characters[1].pos[0] < 0)
 	characters[1].pos[0] = 0;
     
-    if (characters[1].pos[0] > canVas.width-flr - characters[1].sprite[0].size[0]*scaleFactor)
-	characters[1].pos[0] = canVas.width-flr - characters[1].sprite[0].size[0]*scaleFactor;
+    if (characters[1].pos[0] > canVas.width-flr - characters[1].sprite[0].size[0]*scaleFactor+  characters[1].power/25)
+	characters[1].pos[0] = canVas.width-flr - characters[1].sprite[0].size[0]*scaleFactor+characters[1].power/25;
     
     //character 1 floor and reset jump, gravity speed, and knockback speed
-    if (characters[1].pos[1] >= canVas.height-flr - characters[1].sprite[0].size[1]*scaleFactor) {
-        characters[1].pos[1] = canVas.height-flr - characters[1].sprite[0].size[1]*scaleFactor;
+    if (characters[1].pos[1] >= canVas.height-flr - characters[1].sprite[0].size[1]*scaleFactor+characters[1].power/25) {
+        characters[1].pos[1] = canVas.height-flr - characters[1].sprite[0].size[1]*scaleFactor+characters[1].power/25;
         playerSpeedy[1] = 0;
         knockbackSpeedx[1] = 0;
         knockbackSpeedy[1] = 0;
@@ -514,9 +525,9 @@ function collides(x, y, r, b, x2, y2, r2, b2) {
 
 function boxCollides(pos1, size1, pos2, size2) {
     return collides(pos1[0], pos1[1],
-                    pos1[0] + size1[0]*scaleFactor*.6, pos1[1] + size1[1]*scaleFactor*.6,
+                    pos1[0] + size1[0]*(characters[0].power/25 +scaleFactor)*.6, pos1[1] + size1[1]*(characters[0].power/25 +scaleFactor)*.6,
                     pos2[0], pos2[1],
-                    pos2[0] + size2[0]*scaleFactor*.6, pos2[1] + size2[1]*scaleFactor*.6);
+                    pos2[0] + size2[0]*(characters[1].power/25 +scaleFactor)*.6, pos2[1] + size2[1]*(characters[1].power/25 +scaleFactor)*.6);
 }
 
 function checkCollisions() {
