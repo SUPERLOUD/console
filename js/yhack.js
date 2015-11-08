@@ -80,14 +80,85 @@ resources.load(['../static/bkgrd.png',
                 '../static/p2 stand.png',
                 '../static/p2 stand flipped.png',
                 '../static/explosion.png']);
-resources.onReady(function(){
-    document.getElementById("startbutton").addEventListener("click",function(){
-	init();
-	watch();
-	window.requestAnimationFrame(main);
-    });
-});
+resources.onReady(getReady);
+function getReady(){
+    console.log("ready");
+    var topX = 500;
+    var topY = 300;
+    var bW = 240;
+    var bH = 80;
+    var dx = 65;
+    var dy = 59;
+    var hover = false;
+    var btnVal = "Start";
+    if(gameover){
+	topY = 500;
+	btnVal = "Try Again";
+	dx = 10;
+    }
+    ctx.fillStyle = "rgb(150,150,150)";
+    ctx.fillRect(topX,topY,bW,bH);
+    entities.push({x:topX,y:topY,width:bW,height:bH});
+    ctx.font = "50px Arial";
+    ctx.fillStyle = "rgb(50,50,50)";
+    ctx.fillText(btnVal,topX+dx,topY+dy);
+    entities.push({"x":topX+dx,'y':topY+dy,'width':-1,'height':-1});
+    canVas.onmousemove = function(e){
+	var x = e.pageX - canVas.offsetLeft;
+	var y = e.pageY - canVas.offsetTop;
+	if(x>entities[0].x && x<entities[0].x+entities[0].width&&
+	   y > entities[0].y && y < entities[0].y+entities[0].height){
+	    if(!hover){
+		ctx.fillStyle = "rgb(120,120,120)";
+		ctx.fillRect(topX,topY,bW,bH);
+		entities.push({x:topX,y:topY,width:bW,height:bH});
+		ctx.font = "50px Arial";
+		ctx.fillStyle = "rgb(50,50,50)";
+		ctx.fillText(btnVal,topX+dx,topY+dy);
+		hover = !hover;
+	    }
+	}
+	else{
+	    if(hover){
+		ctx.fillStyle = "rgb(150,150,150)";
+		ctx.fillRect(topX,topY,bW,bH);
+		entities.push({x:topX,y:topY,width:bW,height:bH});
+		ctx.font = "50px Arial";
+		ctx.fillStyle = "rgb(50,50,50)";
+		ctx.fillText(btnVal,topX+dx,topY+dy);
+		hover = !hover;
+	    }
+	}
+    };
+    canVas.onclick = function(e){
+	var x = e.pageX - canVas.offsetLeft;
+	var y = e.pageY - canVas.offsetTop;
+	if(x>entities[0].x && x<entities[0].x+entities[0].width&&
+	   y > entities[0].y && y < entities[0].y+entities[0].height){
+	    ctx.drawImage(bg,0,0,1280,720);
+	
+	    lastTime = 0.0; 
+	    characters = [];
+	    //	entities = [];
+	    playerSpeed = [200,200];
+	    playerAction = [[false,false,false,false,false,false],
+			    [false,false,false,false,false,false]];
 
+	    jumplimiter0 = 10;
+	    jumplimiter1 = 10;
+	    
+	    gameover = false;
+	    gametime = 90;  
+
+	    init();
+//	    watch();
+	    window.requestAnimationFrame(main);
+	    entities= [];
+	    canVas.onclick = null;
+	    canVas.onmousemove = null;
+	}
+    }
+}
 function init(){
     background = resources.get('../static/bkgrd.png');
     explosion = resources.get('../static/explosion.png');
