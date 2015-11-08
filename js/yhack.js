@@ -25,8 +25,8 @@ var syncanoKey = "b52cb72f9b01c614d882bc5712a3f32b97cb9001";
 var instanceKey = "todolist";
 var syncanoChannel = "todo-list";
 
-var jumplimiter0 = 0;
-var jumplimiter1 = 0;
+var jumplimiter0 = 10;
+var jumplimiter1 = 10;
 
 var gameover = false;
 var gametime = 0;
@@ -38,11 +38,12 @@ var syncano = new Syncano({
     userKey: "680405847ef8175e53ee7c834fd9e27ca6312d22"
 });
 
-(function watch(){
+function watch(){
     syncano.channel(syncanoChannel).poll()
 	.then(function(res){
 	    if(res==="NO CONTENT"){
-		watch();
+		if(!gameover)
+		    watch();
 	    }else if(res.action==="update"&&res.payload){
 		console.log(res.payload);
 		console.log(res.payload.id,res.payload.iscompleted);
@@ -64,13 +65,18 @@ var syncano = new Syncano({
 	}).catch(function(err){
 	    console.log(err);
 	});
-})();
+}
 
 resources.load(['../static/bkgrd.png','../static/Cube.bmp']);
-//resources.onReady(init);
+resources.onReady(function(){
+    document.getElementById("startbutton").addEventListener("click",function(){
+	init();
+	watch();
+	window.requestAnimationFrame(main);
+    });
+});
 
 function init(){
-    console.log("happening..um what!");
     background = resources.get('../static/bkgrd.png');
     characters.push({
 	pos:[200,360],
@@ -84,7 +90,7 @@ function init(){
     });
     ctx.drawImage(background,0,0,1280,720);
     lastTime = Date.now();
-    main();
+//    main();
     
     document.getElementById("startbutton").style="visibility:hidden";
 }
@@ -93,7 +99,7 @@ function update(dt){
     handleInput(dt);
     for(var i = 0;i<characters.length;i++){
 	characters[i].sprite.update(dt);
-        characters[i].pos[1] += playerSpeed/80;
+        characters[i].pos[1] += playerSpeed[i]/80;
     }
 }
 
@@ -106,14 +112,15 @@ function render(){
 }
 
 function renderEach(entity){
-//    console.log(":",characters[0].pos,characters[1].pos);
     ctx.save();
     ctx.translate(entity.pos[0],entity.pos[1]);
     entity.sprite.render(ctx);
     ctx.restore();
+    console.log(entity.pos);
 }
 
 function handleInput(dt){
+    
     if((input.isDown("UP")||playerAction[0][0])&&jumplimiter0<10){
 	characters[0].pos[1] -= playerSpeed[0] * dt * 5;
 	jumplimiter0++;
@@ -124,7 +131,7 @@ function handleInput(dt){
 	characters[0].pos[1] += playerSpeed[0] * dt;
     if(input.isDown("RIGHT")||playerAction[0][3])
 	characters[0].pos[0] += playerSpeed[0] * dt;
-
+    
     if((input.isDown("w")||playerAction[1][0])&&jumplimiter1<10){
 	characters[1].pos[1] -= playerSpeed[1] * dt * 5;
 	jumplimiter1++;
@@ -135,9 +142,10 @@ function handleInput(dt){
 	characters[1].pos[1] += playerSpeed[1] * dt;
     if(input.isDown("d")||playerAction[1][3])
 	characters[1].pos[0] += playerSpeed[1] * dt;
+    console.log("a:",characters[0].pos,characters[1].pos);
 }
 
-var requestAnimFrame = (function(){
+var requestAnimFrame = function(){
     return window.requestAnimationFrame       ||
         window.webkitRequestAnimationFrame ||
         window.mozRequestAnimationFrame    ||
@@ -146,29 +154,35 @@ var requestAnimFrame = (function(){
         function(callback){
             window.setTimeout(callback, 1000 / 60);
         };
-})();
-
+}
+    
 function checkPlayerBounds() {
     //character 0 x coordinates
-    if (characters[0].pos[0] < 0) characters[0].pos[0] = 0;
+    if (characters[0].pos[0] < 0)
+	characters[0].pos[0] = 0;
     
-    if (characters[0].pos[0] > canVas.width - characters[0].sprite.size[0]) characters[0].pos[0] = canVas.width - characters[0].sprite.size[0];
+    if (characters[0].pos[0] > canVas.width - characters[0].sprite.size[0])
+	characters[0].pos[0] = canVas.width - characters[0].sprite.size[0];
     
     //character 0 floor and reset jump
     if (characters[0].pos[1] > canVas.height - characters[0].sprite.size[1]) {
         characters[0].pos[1] = canVas.height - characters[0].sprite.size[1];
-        if (jumplimiter0 > 0) jumplimiter0 = 0;
+        if (jumplimiter0 > 0)
+	    jumplimiter0 = 0;
     }
     
     //character 1 x coordinates
-    if (characters[1].pos[0] < 0) characters[1].pos[0] = 0;
+    if (characters[1].pos[0] < 0)
+	characters[1].pos[0] = 0;
     
-    if (characters[1].pos[0] > canVas.width - characters[1].sprite.size[0]) characters[1].pos[0] = canVas.width - characters[1].sprite.size[0];
+    if (characters[1].pos[0] > canVas.width - characters[1].sprite.size[0])
+	characters[1].pos[0] = canVas.width - characters[1].sprite.size[0];
     
     //character 1 floor and reset jump
     if (characters[1].pos[1] > canVas.height - characters[1].sprite.size[1]) {
         characters[1].pos[1] = canVas.height - characters[1].sprite.size[1];
-        if (jumplimiter1 > 0) jumplimiter1 = 0;
+        if (jumplimiter1 > 0)
+	    jumplimiter1 = 0;
     }
 }
 
@@ -186,7 +200,6 @@ function boxCollides(pos1, size1, pos2, size2) {
 
 function checkCollisions() {
     checkPlayerBounds();
-
     if (boxCollides(characters[0].pos, characters[0].sprite.size, characters[1].pos, characters[1].sprite.size)) {
         console.log("collision!");
         
@@ -213,11 +226,13 @@ function printgameover() {
 function main(){
     var now = Date.now();
     var dt = (now - lastTime)/1000.0;
-
+    
+    console.log("before update:",characters[0].pos,characters[1].pos);
     update(dt);
+    console.log("after update:",characters[0].pos,characters[1].pos);
     checkCollisions();
     render();
-//    console.log(characters[0].pos,characters[1].pos);
+    
     lastTime = Date.now();
     
     if (!gameover) window.requestAnimationFrame(main);
@@ -233,6 +248,3 @@ function main(){
         printgameover();
     }
 };
-
-window.requestAnimationFrame(main);
-console.log("loaded yhack.js");
