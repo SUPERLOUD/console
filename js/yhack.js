@@ -11,6 +11,7 @@ ctx.drawImage(bg,0,0,1280,720);
 
 var flr = 75;
 var lastTime;
+var lastFire = Date.now();
 var scaleFactor = 3;
 var background;
 var explosion;
@@ -87,7 +88,9 @@ resources.load(['../static/bkgrd.jpg',
                 '../static/p2 walk flipped.png',
                 '../static/p2 stand.png',
                 '../static/p2 stand flipped.png',
-                '../static/explosion.png']);
+                '../static/explosion.png',
+		'../static/punch.png',
+		'../static/punch flipped.png']);
 resources.onReady(getReady);
 function getReady(){
     var topX = 500;
@@ -146,7 +149,8 @@ function getReady(){
 	
 	    lastTime = 0.0; 
 	    characters = [];
-	    //	entities = [];
+	    entities = [];
+	    punches = [[],[]];
 	    playerSpeed = [200,200];
 	    playerAction = [[false,false,false,false,false,false,0],
 			    [false,false,false,false,false,false,0]];
@@ -176,7 +180,7 @@ function init(){
                 new Sprite('../static/p1 stand.png',[0,0],[48,48],4,[0,1,2,1]),
                 new Sprite('../static/p1 stand flipped.png',[0,0],[48,48],4,[0,1,2,1])
         ],
-        HP:400,
+        HP:300,
 	power:0
     });
     characters.push({
@@ -200,6 +204,25 @@ function update(dt){
         characters[i].pos[1] += gravityspeed[i];
 	characters[i].power = playerAction[i][6];
     }
+    for(var i = 0;i<punches[0].length;i++){
+	if(Date.now()-punches[0][i].DOB > 1000){
+	    console.log('punch you too old!');
+	    punches[0].splice(i,1);
+	}
+	else{
+	    punches[0][i].pos = characters[0].pos;
+	    punches[0][i].sprite[0].update(dt);
+	}
+    }
+    for(var i = 0;i<punches[1].length;i++){
+	if(Date.now()-punches[1][i].DOB > 1000)
+	    punches[1].splice(i,1);
+	else{
+	    punches[1][i].pos = characters[1].pos;
+	    punches[1][i].sprite[0].update(dt);
+	}
+	    
+    }
 }
 
 function render(){
@@ -207,6 +230,13 @@ function render(){
     ctx.drawImage(background,0,0,1280,720);
     for(var i = 0;i<characters.length;i++){
 	renderEach(characters[i],directions[i]);
+    }
+    for(var i = 0;i<punches[0].length;i++){
+	console.log("here some punches");
+	renderEach(punches[0][i],0);
+    }
+    for(var i = 0;i<punches[1].length;i++){
+	renderEach(punches[1][i],0);
     }
 }
 
@@ -220,30 +250,7 @@ function renderEach(entity,i){
 function handleInput(dt){
     
     //player 1
-    if((input.isDown("UP")||playerAction[0][0])&&jumplimiter[0]<10){
-	characters[0].pos[1] -= playerSpeed[0] * dt * 5;
-	jumplimiter[0]++;
-    }
-    else if (jumplimiter[0] > 0) {
-        jumplimiter[0] = 10;
-        gravityspeed[0]++;
-    }
-    if(input.isDown("DOWN")||playerAction[0][2])
-	characters[0].pos[1] += playerSpeed[0] * dt;
-    
-    if(input.isDown("LEFT")||playerAction[0][1]) {
-	characters[0].pos[0] -= playerSpeed[0] * dt;
-        directions[0] = 0;
-    }
-    else if(input.isDown("RIGHT")||playerAction[0][3]) {
-	characters[0].pos[0] += playerSpeed[0] * dt;
-        directions[0] = 1;
-    }
-    else if (input.getlastkey() == "LEFT") directions[0] = 2;
-    else if (input.getlastkey() == "RIGHT") directions[0] = 3;
-    
-    //player 2
-    if((input.isDown("w")||playerAction[1][0])&&jumplimiter[1]<10){
+    if((input.isDown("UP")||playerAction[1][0])&&jumplimiter[1]<10){
 	characters[1].pos[1] -= playerSpeed[1] * dt * 5;
 	jumplimiter[1]++;
     }
@@ -251,43 +258,83 @@ function handleInput(dt){
         jumplimiter[1] = 10;
         gravityspeed[1]++;
     }
-    if(input.isDown("s")||playerAction[1][2])
+    if(input.isDown("DOWN")||playerAction[1][2])
 	characters[1].pos[1] += playerSpeed[1] * dt;
     
-    if(input.isDown("a")||playerAction[1][1]) {
+    if(input.isDown("LEFT")||playerAction[1][1]) {
 	characters[1].pos[0] -= playerSpeed[1] * dt;
         directions[1] = 0;
     }
-    else if(input.isDown("d")||playerAction[1][3]) {
+    else if(input.isDown("RIGHT")||playerAction[1][3]) {
 	characters[1].pos[0] += playerSpeed[1] * dt;
         directions[1] = 1;
     }
-    else if (input.getlastkey() == "A") directions[1] = 2;
-    else if (input.getlastkey() == "D") directions[1] = 3;
+    else if (input.getlastkey() == "LEFT") directions[1] = 2;
+    else if (input.getlastkey() == "RIGHT") directions[1] = 3;
+    
+    //player 2
+    if((input.isDown("w")||playerAction[0][0])&&jumplimiter[0]<10){
+	characters[0].pos[1] -= playerSpeed[0] * dt * 5;
+	jumplimiter[0]++;
+    }
+    else if (jumplimiter[0] > 0) {
+        jumplimiter[0] = 10;
+        gravityspeed[0]++;
+    }
+    if(input.isDown("s")||playerAction[0][2])
+	characters[0].pos[1] += playerSpeed[0] * dt;
+    
+    if(input.isDown("a")||playerAction[0][1]) {
+	characters[0].pos[0] -= playerSpeed[0] * dt;
+        directions[0] = 0;
+    }
+    else if(input.isDown("d")||playerAction[0][3]) {
+	characters[0].pos[0] += playerSpeed[0] * dt;
+        directions[0] = 1;
+    }
+    else if (input.getlastkey() == "A") directions[0] = 2;
+    else if (input.getlastkey() == "D") directions[0] = 3;
 
     if(input.isDown("g")|| playerAction[0][4]){
 	if(Date.now() - lastFire > 100){
-	    var pSizeX = characters[0].sprite[0].size[0]/2;
-	    var pSizeY = characters[0].sprite[0].size[1]/2;
-	    var file = "static/punch.png";
+	    var pSizeX = characters[0].sprite[0].size[0];
+	    var pSizeY = characters[0].sprite[0].size[1];
+	    var file = "../static/punch.png";
 	    if(input.getlastkey() == "A"){
 		pSizeX = -pSizeX;
-		file = "static/punch flipped.png";
+		file = "../static/punch flipped.png";
+	    }
 	    var x = characters[0].pos[0] + pSizeX;
-	    var y = characters[1].pos[1] + pSizeY;
+	    var y = characters[0].pos[1] + pSizeY;
 	    punches[0].push({pos:[x,y],
-			     dir:input.getlastkey(),
-			     sprite:new Sprite(file,[200,122],[0]),
+			     sprite:[new Sprite("../static/explosion.png",[0,0],[50,50],1,[0])],
 			     DOB:Date.now()
 			    });
 		
-	    }
 	}
+	    lastFire = Date.now();
     }
     if(input.isDown("h")||playerAction[0][5]){}
-    if(input.isDown(",")|| playerAction[1][4]){}
-    if(input.isDown(".")||playerAction[1][5]){}
-    
+    if(input.isDown("n")|| playerAction[1][4]){
+    	if(Date.now() - lastFire > 100){
+	    var pSizeX = characters[1].sprite[0].size[0];
+	    var pSizeY = characters[1].sprite[0].size[1];
+	    var file = "../static/punch.png";
+	    if(input.getlastkey() == "LEFT"){
+		pSizeX = -pSizeX;
+		file = "../static/punch flipped.png";
+	    }
+	    var x = characters[1].pos[0] + pSizeX;
+	    var y = characters[1].pos[1] + pSizeY;
+	    punches[1].push({pos:[x,y],
+			     sprite:[new Sprite("../static/explosion.png",[0,0],[50,50],1,[0])],
+			     DOB:Date.now()
+			    });
+	    
+	}
+	lastFire = Date.now();
+    }
+    if(input.isDown("m")||playerAction[1][5]){}
 }
 
 var requestAnimFrame = function(){
@@ -381,6 +428,7 @@ function drawthings() {
     ctx.strokeRect(75,canVas.height-30,175,20);
     ctx.strokeRect(canVas.width-250,canVas.height-30,175,20);
     ctx.restore();
+    ctx.save();
     var p1_gradient = ctx.createLinearGradient(75,0,250,0);
     p1_gradient.addColorStop(0,"#000000");
     p1_gradient.addColorStop(1,"#EEEEEE");
@@ -392,6 +440,7 @@ function drawthings() {
     ctx.fillStyle=p2_gradient;
     ctx.fillRect(1030+(175-characters[1].power),canVas.height-28,
 		 characters[1].power,16);
+    ctx.restore();
 }
 
 function foo(){
