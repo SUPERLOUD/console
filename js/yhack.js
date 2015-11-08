@@ -59,14 +59,14 @@ function watch(){
 		case 20: playerAction[0][3] = !playerAction[0][3]; break;
 		case 21: playerAction[0][4] = !playerAction[0][4]; break;
 		case 22: playerAction[0][5] = !playerAction[0][5]; break;
-		case 23: playerAction[0][6] = res.payload.dummy; break;
+		case 23: playerAction[0][6] += res.payload.dummy; break;
 		case 24: playerAction[1][0] = !playerAction[1][0]; break;
 		case 25: playerAction[1][1] = !playerAction[1][1]; break;
 		case 26: playerAction[1][2] = !playerAction[1][2]; break;
 		case 27: playerAction[1][3] = !playerAction[1][3]; break;
 		case 28: playerAction[1][4] = !playerAction[1][4]; break;
 		case 29: playerAction[1][5] = !playerAction[1][5]; break;
-		case 30: playerAction[1][6] = res.payload.dummy; break;
+		case 30: playerAction[1][6] += res.payload.dummy; break;
 		default: break;
 		}
 		
@@ -147,8 +147,8 @@ function getReady(){
 	    characters = [];
 	    //	entities = [];
 	    playerSpeed = [200,200];
-	    playerAction = [[false,false,false,false,false,false],
-			    [false,false,false,false,false,false]];
+	    playerAction = [[false,false,false,false,false,false,0],
+			    [false,false,false,false,false,false,0]];
 
 	    jumplimiter = [10,10];
 	    gravityspeed = [0,0];
