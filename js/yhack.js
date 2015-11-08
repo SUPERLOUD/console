@@ -9,12 +9,15 @@ var bg = new Image();
 bg.src = "static/bkgrd.png";
 ctx.drawImage(bg,0,0,1280,720);
 
+var flr = 75;
 var lastTime;
 var scaleFactor = 3;
 var background;
 var explosion;
 var characters = [];
+var projectiles = [];
 var entities = [];
+var punches = [];
 var playerSpeed = [200,200];
 var playerSpeedx = [0,0];
 var playerSpeedy = [0,0];
@@ -22,19 +25,20 @@ var knockbackSpeedx = [0,0];
 var knockbackSpeedy = [0,0];
 var gravityspeed = [0,0];
 // [up,left,down,right,A,B]
-var playerAction = [[false,false,false,false,false,false],
-		    [false,false,false,false,false,false]];
-                
+
 var damages = [];
 
-//var syncanoKey = "2d2f7c0e75b16769aadb93a2a28111117d43deb5";
-//var instanceKey = "dark-snowflake-7198";
-//var syncanoChannel = "super-loud";
+var playerAction = [[false,false,false,false,false,false,0],
+		    [false,false,false,false,false,false,0]];
 
+var syncanoKey = "0c652470a423f5edea87fc77956f7e8b129ca607";
+var instanceKey = "dark-snowflake-7198";
+var syncanoChannel = "super-loud";
+/*
 var syncanoKey = "b52cb72f9b01c614d882bc5712a3f32b97cb9001";
 var instanceKey = "todolist";
 var syncanoChannel = "todo-list";
-
+*/
 var jumplimiter = [10,10];
 
 var gameover = false;
@@ -51,20 +55,27 @@ var syncano = new Syncano({
 function watch(){
     syncano.channel(syncanoChannel).poll()
 	.then(function(res){
+	    console.log(res);
 	    if(res==="NO CONTENT"){
 		if(!gameover)
 		    watch();
-	    }else if(res.action==="update"&&res.payload){
-		var val = res.payload.iscompleted;
+	    }else if(res.action==="update"){
+		console.log(res.payload);
 		switch(res.payload.id){
-		case 8100: playerAction[0][0] = val; break;
-		case 8102: playerAction[0][1] = val; break;
-		case 8103: playerAction[0][2] = val; break;
-		case 8104: playerAction[0][3] = val; break;
-		case 8105: playerAction[1][0] = val; break;
-		case 8106: playerAction[1][1] = val; break;
-		case 8107: playerAction[1][2] = val; break;
-		case 8108: playerAction[1][3] = val; break;
+		case 17: playerAction[0][0] = !playerAction[0][0]; break;
+		case 18: playerAction[0][1] = !playerAction[0][1]; break;
+		case 19: playerAction[0][2] = !playerAction[0][2]; break;
+		case 20: playerAction[0][3] = !playerAction[0][3]; break;
+		case 21: playerAction[0][4] = !playerAction[0][4]; break;
+		case 22: playerAction[0][5] = !playerAction[0][5]; break;
+		case 23: playerAction[0][6] += res.payload.dummy; break;
+		case 24: playerAction[1][0] = !playerAction[1][0]; break;
+		case 25: playerAction[1][1] = !playerAction[1][1]; break;
+		case 26: playerAction[1][2] = !playerAction[1][2]; break;
+		case 27: playerAction[1][3] = !playerAction[1][3]; break;
+		case 28: playerAction[1][4] = !playerAction[1][4]; break;
+		case 29: playerAction[1][5] = !playerAction[1][5]; break;
+		case 30: playerAction[1][6] += res.payload.dummy; break;
 		default: break;
 		}
 		
@@ -75,7 +86,7 @@ function watch(){
 	});
 }
 
-resources.load(['../static/bkgrd.png',
+resources.load(['../static/bkgrd.jpg',
                 '../static/p1 walk.png',
                 '../static/p1 walk flipped.png',
                 '../static/p1 stand.png',
@@ -87,7 +98,6 @@ resources.load(['../static/bkgrd.png',
                 '../static/explosion.png']);
 resources.onReady(getReady);
 function getReady(){
-    console.log("ready");
     var topX = 500;
     var topY = 300;
     var bW = 240;
@@ -150,8 +160,8 @@ function getReady(){
             playerSpeedy = [0,0];
             knockbackSpeedx = [0,0];
             knockbackSpeedy = [0,0];
-	    playerAction = [[false,false,false,false,false,false],
-			    [false,false,false,false,false,false]];
+	    playerAction = [[false,false,false,false,false,false,0],
+			    [false,false,false,false,false,false,0]];
 
 	    jumplimiter = [10,10];
 	    gravityspeed = [0,0];
@@ -159,7 +169,7 @@ function getReady(){
 	    gametime = 90;  
 
 	    init();
-//	    watch();
+	    watch();
 	    window.requestAnimationFrame(main);
 	    entities= [];
 	    canVas.onclick = null;
@@ -169,7 +179,7 @@ function getReady(){
 }
 
 function init(){
-    background = resources.get('../static/bkgrd.png');
+    background = resources.get('../static/bkgrd.jpg');
     explosion = resources.get('../static/explosion.png');
     characters.push({
 	pos:[200,360],
@@ -177,7 +187,8 @@ function init(){
                 new Sprite('../static/p1 walk flipped.png',[0,0],[48,48],3,[0,1,2]),
                 new Sprite('../static/p1 stand.png',[0,0],[48,48],4,[0,1,2,1]),
                 new Sprite('../static/p1 stand flipped.png',[0,0],[48,48],4,[0,1,2,1])],
-        HP:400
+        HP:400,
+	power:0
     });
     characters.push({
 	pos:[1000,360],
@@ -185,7 +196,8 @@ function init(){
                 new Sprite('../static/p2 walk flipped.png',[0,0],[48,48],3,[0,1,2]),
                 new Sprite('../static/p2 stand.png',[0,0],[48,48],4,[0,1,2,1]),
                 new Sprite('../static/p2 stand flipped.png',[0,0],[48,48],4,[0,1,2,1])],
-        HP:400
+        HP:400,
+	power:0
     });
     ctx.drawImage(background,0,0,1280,720);
     lastTime = Date.now();
@@ -200,6 +212,16 @@ function update(dt){
         playerSpeedy[i] += gravityspeed[i];
         knockbackSpeedy[0] += .25;
         knockbackSpeedy[1] += .25;
+        characters[i].pos[1] += gravityspeed[i];
+	characters[i].power = playerAction[i][6];
+    }
+    
+    for (var i = 0; i < projectiles.length; i++) {
+        var dir = 1;
+        if (projectiles[i].direction == 0) {
+            dir = -1;
+        }
+        projectiles[i].pos[0] += projectiles[i].speed * dt * dir;
     }
 }
 
@@ -207,7 +229,10 @@ function render(){
     ctx.fillRect(0,0,1280,720);
     ctx.drawImage(background,0,0,1280,720);
     for(var i = 0;i<characters.length;i++){
-	renderEach(characters[i],directions[i]);
+    	renderEach(characters[i],directions[i]);
+    }
+    for (var i = 0; i < projectiles.length; i++) {
+        renderEachProjectile(projectiles[i]);
     }
 }
 
@@ -215,6 +240,15 @@ function renderEach(entity,i){
     ctx.save();
     ctx.translate(entity.pos[0],entity.pos[1]);
     entity.sprite[i].render(ctx,scaleFactor);
+    ctx.restore();
+}
+
+function renderEachProjectile(entity) { 
+    ctx.save();
+    // ctx.translate(entity.pos[0], entity.pos[1]);
+    // entity.sprite[entity.direction].render(ctx,sca)
+    // ctx.drawImage(explosion,characters[target].pos[0],characters[target].pos[1]-characters[target].sprite[0].size[0]/2,40,40);
+    ctx.drawImage(explosion,entity.pos[0],entity.pos[1],40,40);
     ctx.restore();
 }
 
@@ -279,6 +313,7 @@ function handleInput(dt){
         playerSpeedx[1] = playerSpeed[1] * dt;
         directions[1] = 1;
     }
+
     else if (input.getlastkey() == "A") {
         playerSpeedx[1] = 0;
         directions[1] = 2;
@@ -288,6 +323,21 @@ function handleInput(dt){
         directions[1] = 3;
     }
     else playerSpeedx[1] = 0;
+
+    if(input.isDown("g")||playerAction[0][4]){}
+    if(input.isDown("h")||playerAction[0][5]){
+        var projectileDirection = directions[1] - 2;
+        var projectileX = projectileDirection == 0 ? (characters[1].pos[0]) : (characters[1].pos[0] + characters[0].sprite[0].size[0]*scaleFactor);
+        projectiles.push({
+            direction: projectileDirection,
+            pos: [projectileX, characters[1].pos[1]],
+            damage: 5,
+            speed: 300,
+            scale: 1
+        });
+    }
+    if(input.isDown(",")||playerAction[1][4]){}
+    if(input.isDown(".")||playerAction[1][5]){}
 }
 
 //update character positions based on their speeds
@@ -315,15 +365,16 @@ function checkPlayerBounds() {
     if (characters[0].pos[0] < 0)
 	characters[0].pos[0] = 0;
     
-    if (characters[0].pos[0] > canVas.width - characters[0].sprite[0].size[0]*scaleFactor)
-	characters[0].pos[0] = canVas.width - characters[0].sprite[0].size[0]*scaleFactor;
+    if (characters[0].pos[0] > canVas.width-flr - characters[0].sprite[0].size[0]*scaleFactor)
+	characters[0].pos[0] = canVas.width-flr - characters[0].sprite[0].size[0]*scaleFactor;
     
     //character 0 floor and reset jump, gravity speed, and knockback speed
-    if (characters[0].pos[1] >= canVas.height - characters[0].sprite[0].size[1]*scaleFactor) {
-        characters[0].pos[1] = canVas.height - characters[0].sprite[0].size[1]*scaleFactor;
+    if (characters[0].pos[1] >= canVas.height-flr - characters[0].sprite[0].size[1]*scaleFactor) {
+        characters[0].pos[1] = canVas.height-flr - characters[0].sprite[0].size[1]*scaleFactor;
         playerSpeedy[0] = 0;
         knockbackSpeedx[0] = 0;
         knockbackSpeedy[0] = 0;
+        
         if (jumplimiter[0] > 0) {
 	    jumplimiter[0] = 0;
             gravityspeed[0] = 0;
@@ -334,15 +385,16 @@ function checkPlayerBounds() {
     if (characters[1].pos[0] < 0)
 	characters[1].pos[0] = 0;
     
-    if (characters[1].pos[0] > canVas.width - characters[1].sprite[0].size[0]*scaleFactor)
-	characters[1].pos[0] = canVas.width - characters[1].sprite[0].size[0]*scaleFactor;
+    if (characters[1].pos[0] > canVas.width-flr - characters[1].sprite[0].size[0]*scaleFactor)
+	characters[1].pos[0] = canVas.width-flr - characters[1].sprite[0].size[0]*scaleFactor;
     
     //character 1 floor and reset jump, gravity speed, and knockback speed
-    if (characters[1].pos[1] >= canVas.height - characters[1].sprite[0].size[1]*scaleFactor) {
-        characters[1].pos[1] = canVas.height - characters[1].sprite[0].size[1]*scaleFactor;
+    if (characters[1].pos[1] >= canVas.height-flr - characters[1].sprite[0].size[1]*scaleFactor) {
+        characters[1].pos[1] = canVas.height-flr - characters[1].sprite[0].size[1]*scaleFactor;
         playerSpeedy[1] = 0;
         knockbackSpeedx[1] = 0;
         knockbackSpeedy[1] = 0;
+
         if (jumplimiter[1] > 0) {
 	    jumplimiter[1] = 0;
             gravityspeed[1] = 0;
@@ -396,22 +448,23 @@ function checkCollisions() {
 		    characters[0].sprite[0].size,
 		    characters[1].pos,
 		    characters[1].sprite[0].size)) {
-        dealdamage(0,50);
+        dealdamage(0,200);
     }
 }
 
 function drawthings() {
     //game time
-    ctx.font = "30px Arial";
-    ctx.fillStyle = "#000000";
-    ctx.fillText(Math.floor(gametime),10,50);
+    //ctx.font = "30px Arial";
+    //ctx.fillStyle = "#000000";
+
+    //ctx.fillText(Math.floor(gametime),10,50);
     //HP
-    ctx.fillText(characters[0].HP,420,90);
-    ctx.fillText(characters[1].HP,canVas.width/2+420,90);
+    //ctx.fillText(characters[0].HP,420,90);
+    //ctx.fillText(characters[1].HP,canVas.width/2+420,90);
     //HP bars
-    ctx.fillStyle = "#FF0000";
-    ctx.fillRect(10,80,characters[0].HP,10);
-    ctx.fillRect(canVas.width/2,80,characters[1].HP,10);
+    //ctx.fillStyle = "#FF0000";
+    //ctx.fillRect(10,80,characters[0].HP,10);
+    //ctx.fillRect(canVas.width/2,80,characters[1].HP,10);
     
     //damage explosions
     for (var i = 0; i < damages.length; i++) {
@@ -424,8 +477,45 @@ function drawthings() {
             damages[i].timer++;
         }
     }
+    
+    //UI
+    ctx.font = "30px Arial";
+    ctx.fillStyle = "#000000";
+    //game time
+    ctx.fillText(Math.floor(gametime),canVas.width/2-10,50);
+    //character HPs
+    ctx.fillText(characters[0].HP,170+characters[0].HP,90);
+    ctx.fillText(characters[1].HP,670+(400-characters[1].HP),90);
+    
+    //HP bars
+    ctx.fillStyle = "#FF0000";
+    ctx.fillRect(150,80,characters[0].HP,10);
+    ctx.fillRect(730+(400-characters[1].HP),80,characters[1].HP,10);
+    
+    ctx.save();
+    //power bar
+    ctx.lineWidth="4";
+    ctx.strokeRect(75,canVas.height-30,175,20);
+    ctx.strokeRect(canVas.width-250,canVas.height-30,175,20);
+    ctx.restore();
+    var p1_gradient = ctx.createLinearGradient(75,0,250,0);
+    p1_gradient.addColorStop(0,"#000000");
+    p1_gradient.addColorStop(1,"#EEEEEE");
+    ctx.fillStyle=p1_gradient;
+    ctx.fillRect(75,canVas.height-28,characters[0].power,16);
+    var p2_gradient = ctx.createLinearGradient(1030,0,1185,0);
+    p2_gradient.addColorStop(1,"#000000");
+    p2_gradient.addColorStop(0,"#EEEEEE");
+    ctx.fillStyle=p2_gradient;
+    ctx.fillRect(1030+(175-characters[1].power),canVas.height-28,
+		 characters[1].power,16);
 }
 
+function foo(){
+    characters[0].power++;
+    characters[1].power++;    
+    console.log(characters[0].power,characters[1].power);
+}
 function printgameover() {
     ctx.save();
     ctx.fillStyle = "rgba(50,50,50,.4)";
