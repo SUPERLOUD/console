@@ -15,6 +15,7 @@ var lastFire = Date.now();
 var scaleFactor = 3;
 var background;
 var explosion;
+var shakeIt;
 var characters = [];
 var projectiles = [];
 var entities = [];
@@ -154,7 +155,8 @@ function getReady(){
 	   y > entities[0].y && y < entities[0].y+entities[0].height){
 	    ctx.drawImage(bg,0,0,1280,720);
 	
-	    lastTime = 0.0; 
+	    lastTime = 0.0;
+	    shakeIt = false;
 	    characters = [];
 	    entities = [];
 	    punches = [[],[]];
@@ -590,10 +592,28 @@ function checkCollisions() {
     getReady();
 }
 
-    function main(){
+function saveShake(){
+    ctx.save();
+}
+
+function shake(dt){
+    //maybe frequency is length, strength is loudness?
+    if(Math.random()>.66)
+	ctx.translate(Math.random()*20,Math.random()*20);
+}
+
+function loadShake(){
+    ctx.restore();
+}
+
+function main(){
     var now = Date.now();
     var dt = (now - lastTime)/1000.0;
-    
+
+    if(shakeIt){
+	saveShake();
+	shake(dt);
+    }
     update(dt);
     render();
     checkCollisions();
@@ -614,4 +634,6 @@ function checkCollisions() {
         printgameover();
 	return;
     }
+    if(shakeIt)
+	loadShake();
 };
