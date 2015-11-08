@@ -15,7 +15,7 @@
             this._index += this.speed*dt;
         },
 
-        render: function(ctx) {
+        render: function(ctx,sF) {
             var frame;
 
             if(this.speed > 0) {
@@ -47,7 +47,7 @@
                           x, y,
                           this.size[0], this.size[1],
                           0, 0,
-                          this.size[0], this.size[1]);
+                          this.size[0]*3, this.size[1]*sF);
 	   
         }
     };

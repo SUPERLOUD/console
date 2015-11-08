@@ -9,7 +9,8 @@ var bg = new Image();
 bg.src = "static/bkgrd.png";
 ctx.drawImage(bg,0,0,1280,720);
 
-var lastTime; 
+var lastTime;
+var scaleFactor = 3;
 var background;
 var characters = [];
 var entities = [];
@@ -201,7 +202,7 @@ function render(){
 function renderEach(entity,i){
     ctx.save();
     ctx.translate(entity.pos[0],entity.pos[1]);
-    entity.sprite[i].render(ctx);
+    entity.sprite[i].render(ctx,scaleFactor);
     ctx.restore();
 }
 
@@ -263,12 +264,12 @@ function checkPlayerBounds() {
     if (characters[0].pos[0] < 0)
 	characters[0].pos[0] = 0;
     
-    if (characters[0].pos[0] > canVas.width - characters[0].sprite[0].size[0])
-	characters[0].pos[0] = canVas.width - characters[0].sprite[0].size[0];
+    if (characters[0].pos[0] > canVas.width - characters[0].sprite[0].size[0]*scaleFactor)
+	characters[0].pos[0] = canVas.width - characters[0].sprite[0].size[0]*scaleFactor;
     
     //character 0 floor and reset jump
-    if (characters[0].pos[1] > canVas.height - characters[0].sprite[0].size[1]) {
-        characters[0].pos[1] = canVas.height - characters[0].sprite[0].size[1];
+    if (characters[0].pos[1] > canVas.height - characters[0].sprite[0].size[1]*scaleFactor) {
+        characters[0].pos[1] = canVas.height - characters[0].sprite[0].size[1]*scaleFactor;
         if (jumplimiter0 > 0)
 	    jumplimiter0 = 0;
     }
@@ -277,12 +278,12 @@ function checkPlayerBounds() {
     if (characters[1].pos[0] < 0)
 	characters[1].pos[0] = 0;
     
-    if (characters[1].pos[0] > canVas.width - characters[1].sprite[0].size[0])
-	characters[1].pos[0] = canVas.width - characters[1].sprite[0].size[0];
+    if (characters[1].pos[0] > canVas.width - characters[1].sprite[0].size[0]*scaleFactor)
+	characters[1].pos[0] = canVas.width - characters[1].sprite[0].size[0]*scaleFactor;
     
     //character 1 floor and reset jump
-    if (characters[1].pos[1] > canVas.height - characters[1].sprite[0].size[1]) {
-        characters[1].pos[1] = canVas.height - characters[1].sprite[0].size[1];
+    if (characters[1].pos[1] > canVas.height - characters[1].sprite[0].size[1]*scaleFactor) {
+        characters[1].pos[1] = canVas.height - characters[1].sprite[0].size[1]*scaleFactor;
         if (jumplimiter1 > 0)
 	    jumplimiter1 = 0;
     }
@@ -302,7 +303,10 @@ function boxCollides(pos1, size1, pos2, size2) {
 
 function checkCollisions() {
     checkPlayerBounds();
-    if (boxCollides(characters[0].pos, characters[0].sprite[0].size, characters[1].pos, characters[1].sprite[0].size)) {
+    if (boxCollides(characters[0].pos,
+		    characters[0].sprite[0].size,
+		    characters[1].pos,
+		    characters[1].sprite[0].size)) {
         characters[0].HP--;
         characters[1].HP--;
     }
