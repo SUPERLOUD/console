@@ -14,6 +14,7 @@ var scaleFactor = 3;
 var background;
 var explosion;
 var characters = [];
+var entities = [];
 var playerSpeed = [200,200];
 var gravityspeed = [0,0];
 // [up,left,down,right,A,B]
@@ -31,7 +32,7 @@ var syncanoChannel = "todo-list";
 var jumplimiter = [10,10];
 
 var gameover = false;
-var gametime = 0;
+var gametime = 90;
 
 var directions = [3,2];
 
@@ -48,8 +49,6 @@ function watch(){
 		if(!gameover)
 		    watch();
 	    }else if(res.action==="update"&&res.payload){
-		console.log(res.payload);
-		console.log(res.payload.id,res.payload.iscompleted);
 		var val = res.payload.iscompleted;
 		switch(res.payload.id){
 		case 8100: playerAction[0][0] = val; break;
@@ -144,9 +143,8 @@ function getReady(){
 	    playerAction = [[false,false,false,false,false,false],
 			    [false,false,false,false,false,false]];
 
-	    jumplimiter0 = 10;
-	    jumplimiter1 = 10;
-	    
+	    jumplimiter = [10,10];
+	    gravityspeed = [0,0];
 	    gameover = false;
 	    gametime = 90;  
 
@@ -159,6 +157,7 @@ function getReady(){
 	}
     }
 }
+
 function init(){
     background = resources.get('../static/bkgrd.png');
     explosion = resources.get('../static/explosion.png');
@@ -181,9 +180,6 @@ function init(){
     });
     ctx.drawImage(background,0,0,1280,720);
     lastTime = Date.now();
-//    main();
-    
-    document.getElementById("startbutton").style="visibility:hidden";
 }
 
 function update(dt){
@@ -199,8 +195,6 @@ function render(){
     ctx.fillRect(0,0,1280,720);
     ctx.drawImage(background,0,0,1280,720);
     for(var i = 0;i<characters.length;i++){
-        if (i == 0) console.log("blue: " + directions[i]);
-        if (i == 1) console.log("red: " + directions[i]);
 	renderEach(characters[i],directions[i]);
     }
 }
@@ -210,7 +204,6 @@ function renderEach(entity,i){
     ctx.translate(entity.pos[0],entity.pos[1]);
     entity.sprite[i].render(ctx,scaleFactor);
     ctx.restore();
-    //console.log(entity.pos);
 }
 
 function handleInput(dt){
@@ -260,7 +253,6 @@ function handleInput(dt){
     }
     else if (input.getlastkey() == "A") directions[1] = 2;
     else if (input.getlastkey() == "D") directions[1] = 3;
-    //console.log("a:",characters[0].pos,characters[1].pos);
 }
 
 var requestAnimFrame = function(){
@@ -349,17 +341,20 @@ function drawthings() {
 }
 
 function printgameover() {
-    ctx.fillText("GAME OVER", canVas.width/2, canVas.height/2);
-    console.log("GAME OVER");
+    ctx.save();
+    ctx.fillStyle = "rgba(50,50,50,.4)";
+    ctx.fillRect(0,0,canVas.width,canVas.height);
+    ctx.restore();
+    ctx.font = "80px Arial";
+    ctx.fillText("GAME OVER", canVas.width/2-250, canVas.height/2);
+    getReady();
 }
 
 function main(){
     var now = Date.now();
     var dt = (now - lastTime)/1000.0;
     
-    //console.log("before update:",characters[0].pos,characters[1].pos);
     update(dt);
-    //console.log("after update:",characters[0].pos,characters[1].pos);
     render();
     checkCollisions();
     
@@ -367,14 +362,16 @@ function main(){
     
     if (!gameover) window.requestAnimationFrame(main);
     
-    gametime+=dt;
+    gametime-=dt;
     drawthings();
     if (characters[0].HP <= 0 || characters[1].HP <= 0) {
         gameover = true;
         printgameover();
+	return;
     }
-    if (gametime > 90) {
+    if (gametime < 0) {
         gameover = true;
         printgameover();
+	return;
     }
 };
