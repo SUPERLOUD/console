@@ -77,7 +77,7 @@ function watch(){
 	});
 }
 
-resources.load(['../static/bkgrd.png',
+resources.load(['../static/bkgrd.jpg',
                 '../static/p1 walk.png',
                 '../static/p1 walk flipped.png',
                 '../static/p1 stand.png',
@@ -166,7 +166,7 @@ function getReady(){
 }
 
 function init(){
-    background = resources.get('../static/bkgrd.png');
+    background = resources.get('../static/bkgrd.jpg');
     explosion = resources.get('../static/explosion.png');
     characters.push({
 	pos:[200,360],
@@ -197,6 +197,7 @@ function update(dt){
 	characters[i].sprite[directions[i]].update(dt);
         //gravity
         characters[i].pos[1] += gravityspeed[i];
+	characters[i].power = playerAction[i][6];
     }
 }
 
