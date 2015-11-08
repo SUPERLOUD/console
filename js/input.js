@@ -1,6 +1,7 @@
 
 (function() {
     var pressedKeys = {};
+    var lastkeypressed;
 
     function setKey(event, status) {
         var code = event.keyCode;
@@ -23,6 +24,8 @@
         }
 
         pressedKeys[key] = status;
+        
+        if (status == false) lastkeypressed = key;
     }
 
     document.addEventListener('keydown', function(e) {
@@ -40,6 +43,9 @@
     window.input = {
         isDown: function(key) {
             return pressedKeys[key.toUpperCase()];
+        },
+        getlastkey: function() {
+            return lastkeypressed;
         }
     };
 })();
