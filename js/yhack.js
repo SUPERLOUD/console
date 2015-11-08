@@ -302,6 +302,7 @@ function checkPlayerBounds() {
 
 function dealdamage(target,damage) {
     characters[target].HP -= damage;
+    ctx.font = damage + 20 + "px Arial"
     ctx.fillStyle = "#FF0000";
     ctx.drawImage(explosion,characters[target].pos[0],characters[target].pos[1]-characters[target].sprite[0].size[0]/2,40,40);
     ctx.fillText(damage,characters[target].pos[0]+10,characters[target].pos[1]+5);
@@ -325,8 +326,8 @@ function checkCollisions() {
 		    characters[0].sprite[0].size,
 		    characters[1].pos,
 		    characters[1].sprite[0].size)) {
-        characters[0].HP--;
-        characters[1].HP--;
+        dealdamage(0,1);
+        dealdamage(1,10);
     }
 }
 
