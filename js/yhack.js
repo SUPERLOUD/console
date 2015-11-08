@@ -15,6 +15,7 @@ var scaleFactor = 3;
 var background;
 var explosion;
 var characters = [];
+var projectiles = [];
 var entities = [];
 var punches = [];
 var playerSpeed = [200,200];
@@ -200,13 +201,23 @@ function update(dt){
         characters[i].pos[1] += gravityspeed[i];
 	characters[i].power = playerAction[i][6];
     }
+    for (var i = 0; i < projectiles.length; i++) {
+        var dir = 1;
+        if (projectiles[i].direction == 0) {
+            dir = -1;
+        }
+        projectiles[i].pos[0] += projectiles[i].speed * dt * dir;
+    }
 }
 
 function render(){
     ctx.fillRect(0,0,1280,720);
     ctx.drawImage(background,0,0,1280,720);
     for(var i = 0;i<characters.length;i++){
-	renderEach(characters[i],directions[i]);
+    	renderEach(characters[i],directions[i]);
+    }
+    for (var i = 0; i < projectiles.length; i++) {
+        renderEachProjectile(projectiles[i]);
     }
 }
 
@@ -214,6 +225,15 @@ function renderEach(entity,i){
     ctx.save();
     ctx.translate(entity.pos[0],entity.pos[1]);
     entity.sprite[i].render(ctx,scaleFactor);
+    ctx.restore();
+}
+
+function renderEachProjectile(entity) { 
+    ctx.save();
+    // ctx.translate(entity.pos[0], entity.pos[1]);
+    // entity.sprite[entity.direction].render(ctx,sca)
+    // ctx.drawImage(explosion,characters[target].pos[0],characters[target].pos[1]-characters[target].sprite[0].size[0]/2,40,40);
+    ctx.drawImage(explosion,entity.pos[0],entity.pos[1],40,40);
     ctx.restore();
 }
 
@@ -265,9 +285,19 @@ function handleInput(dt){
     else if (input.getlastkey() == "A") directions[1] = 2;
     else if (input.getlastkey() == "D") directions[1] = 3;
 
-    if(input.isDown("g")| playerAction[0][4]){}
-    if(input.isDown("h")||playerAction[0][5]){}
-    if(input.isDown(",")| playerAction[1][4]){}
+    if(input.isDown("g")||playerAction[0][4]){}
+    if(input.isDown("h")||playerAction[0][5]){
+        var projectileDirection = directions[1] - 2;
+        var projectileX = projectileDirection == 0 ? (characters[1].pos[0]) : (characters[1].pos[0] + characters[0].sprite[0].size[0]*scaleFactor);
+        projectiles.push({
+            direction: projectileDirection,
+            pos: [projectileX, characters[1].pos[1]],
+            damage: 5,
+            speed: 300,
+            scale: 1
+        });
+    }
+    if(input.isDown(",")||playerAction[1][4]){}
     if(input.isDown(".")||playerAction[1][5]){}
     
 }
