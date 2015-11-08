@@ -11,9 +11,10 @@ ctx.drawImage(bg,0,0,1280,720);
 
 var lastTime; 
 var background;
+var explosion;
 var characters = [];
-var entities = [];
 var playerSpeed = [200,200];
+var gravityspeed = [0,0];
 // [up,left,down,right,A,B]
 var playerAction = [[false,false,false,false,false,false],
 		    [false,false,false,false,false,false]];
@@ -26,11 +27,10 @@ var syncanoKey = "b52cb72f9b01c614d882bc5712a3f32b97cb9001";
 var instanceKey = "todolist";
 var syncanoChannel = "todo-list";
 
-var jumplimiter0 = 10;
-var jumplimiter1 = 10;
+var jumplimiter = [10,10];
 
 var gameover = false;
-var gametime = 90;
+var gametime = 0;
 
 var directions = [3,2];
 
@@ -47,6 +47,8 @@ function watch(){
 		if(!gameover)
 		    watch();
 	    }else if(res.action==="update"&&res.payload){
+		console.log(res.payload);
+		console.log(res.payload.id,res.payload.iscompleted);
 		var val = res.payload.iscompleted;
 		switch(res.payload.id){
 		case 8100: playerAction[0][0] = val; break;
@@ -75,116 +77,49 @@ resources.load(['../static/bkgrd.png',
                 '../static/p2 walk.png',
                 '../static/p2 walk flipped.png',
                 '../static/p2 stand.png',
-                '../static/p2 stand flipped.png']);
-
-resources.onReady(getReady);
-function getReady(){
-    console.log("ready");
-    var topX = 500;
-    var topY = 300;
-    var bW = 240;
-    var bH = 80;
-    var dx = 65;
-    var dy = 59;
-    var hover = false;
-    var btnVal = "Start";
-    if(gameover){
-	topY = 500;
-	btnVal = "Try Again";
-	dx = 10;
-    }
-    ctx.fillStyle = "rgb(150,150,150)";
-    ctx.fillRect(topX,topY,bW,bH);
-    entities.push({x:topX,y:topY,width:bW,height:bH});
-    ctx.font = "50px Arial";
-    ctx.fillStyle = "rgb(50,50,50)";
-    ctx.fillText(btnVal,topX+dx,topY+dy);
-    entities.push({"x":topX+dx,'y':topY+dy,'width':-1,'height':-1});
-    canVas.onmousemove = function(e){
-	var x = e.pageX - canVas.offsetLeft;
-	var y = e.pageY - canVas.offsetTop;
-	if(x>entities[0].x && x<entities[0].x+entities[0].width&&
-	   y > entities[0].y && y < entities[0].y+entities[0].height){
-	    if(!hover){
-		ctx.fillStyle = "rgb(120,120,120)";
-		ctx.fillRect(topX,topY,bW,bH);
-		entities.push({x:topX,y:topY,width:bW,height:bH});
-		ctx.font = "50px Arial";
-		ctx.fillStyle = "rgb(50,50,50)";
-		ctx.fillText(btnVal,topX+dx,topY+dy);
-		hover = !hover;
-	    }
-	}
-	else{
-	    if(hover){
-		ctx.fillStyle = "rgb(150,150,150)";
-		ctx.fillRect(topX,topY,bW,bH);
-		entities.push({x:topX,y:topY,width:bW,height:bH});
-		ctx.font = "50px Arial";
-		ctx.fillStyle = "rgb(50,50,50)";
-		ctx.fillText(btnVal,topX+dx,topY+dy);
-		hover = !hover;
-	    }
-	}
-    };
-    canVas.onclick = function(e){
-	var x = e.pageX - canVas.offsetLeft;
-	var y = e.pageY - canVas.offsetTop;
-	if(x>entities[0].x && x<entities[0].x+entities[0].width&&
-	   y > entities[0].y && y < entities[0].y+entities[0].height){
-	    ctx.drawImage(bg,0,0,1280,720);
-	
-	    lastTime = 0.0; 
-	    characters = [];
-	    //	entities = [];
-	    playerSpeed = [200,200];
-	    playerAction = [[false,false,false,false,false,false],
-			    [false,false,false,false,false,false]];
-
-	    jumplimiter0 = 10;
-	    jumplimiter1 = 10;
-	    
-	    gameover = false;
-	    gametime = 90;  
-
-	    init();
-//	    watch();
-	    window.requestAnimationFrame(main);
-	    entities= [];
-	    canVas.onclick = null;
-	    canVas.onmousemove = null;
-	}
-    }
-}
+                '../static/p2 stand flipped.png',
+                '../static/explosion.png']);
+resources.onReady(function(){
+    document.getElementById("startbutton").addEventListener("click",function(){
+	init();
+	watch();
+	window.requestAnimationFrame(main);
+    });
+});
 
 function init(){
     background = resources.get('../static/bkgrd.png');
+    explosion = resources.get('../static/explosion.png');
     characters.push({
 	pos:[200,360],
-	sprite: [new Sprite('../static/p1 walk.png',[0,0],[48,48],6,[0,1,2,]),
-            new Sprite('../static/p1 walk flipped.png',[0,0],[48,48],6,[0,1,2]),
-                new Sprite('../static/p1 stand.png',[0,0],[48,48],8,[0,1,2,1]),
-          new Sprite('../static/p1 stand flipped.png',[0,0],[48,48],8,[0,1,2,1])
+	sprite: [new Sprite('../static/p1 walk.png',[0,0],[48,48],3,[0,1,2,]),
+                new Sprite('../static/p1 walk flipped.png',[0,0],[48,48],3,[0,1,2]),
+                new Sprite('../static/p1 stand.png',[0,0],[48,48],4,[0,1,2,1]),
+                new Sprite('../static/p1 stand flipped.png',[0,0],[48,48],4,[0,1,2,1])
         ],
         HP:400
     });
     characters.push({
 	pos:[1000,360],
-	sprite: [new Sprite('../static/p2 walk.png',[0,0],[48,48],6,[0,1,2]),
-            new Sprite('../static/p2 walk flipped.png',[0,0],[48,48],6,[0,1,2]),
-                new Sprite('../static/p2 stand.png',[0,0],[48,48],8,[0,1,2,1]),
-        new Sprite('../static/p2 stand flipped.png',[0,0],[48,48],8,[0,1,2,1])],
+	sprite: [new Sprite('../static/p2 walk.png',[0,0],[48,48],3,[0,1,2]),
+                new Sprite('../static/p2 walk flipped.png',[0,0],[48,48],3,[0,1,2]),
+                new Sprite('../static/p2 stand.png',[0,0],[48,48],4,[0,1,2,1]),
+                new Sprite('../static/p2 stand flipped.png',[0,0],[48,48],4,[0,1,2,1])],
         HP:400
     });
     ctx.drawImage(background,0,0,1280,720);
     lastTime = Date.now();
+//    main();
+    
+    document.getElementById("startbutton").style="visibility:hidden";
 }
 
 function update(dt){
     handleInput(dt);
     for(var i = 0;i<characters.length;i++){
 	characters[i].sprite[directions[i]].update(dt);
-        characters[i].pos[1] += playerSpeed[i]/80;
+        //gravity
+        characters[i].pos[1] += gravityspeed[i];
     }
 }
 
@@ -192,8 +127,8 @@ function render(){
     ctx.fillRect(0,0,1280,720);
     ctx.drawImage(background,0,0,1280,720);
     for(var i = 0;i<characters.length;i++){
-//        if (i == 0) console.log("blue: " + directions[i]);
-//        if (i == 1) console.log("red: " + directions[i]);
+        if (i == 0) console.log("blue: " + directions[i]);
+        if (i == 1) console.log("red: " + directions[i]);
 	renderEach(characters[i],directions[i]);
     }
 }
@@ -203,15 +138,20 @@ function renderEach(entity,i){
     ctx.translate(entity.pos[0],entity.pos[1]);
     entity.sprite[i].render(ctx);
     ctx.restore();
+    //console.log(entity.pos);
 }
 
 function handleInput(dt){
+    
     //player 1
-    if((input.isDown("UP")||playerAction[0][0])&&jumplimiter0<10){
+    if((input.isDown("UP")||playerAction[0][0])&&jumplimiter[0]<10){
 	characters[0].pos[1] -= playerSpeed[0] * dt * 5;
-	jumplimiter0++;
+	jumplimiter[0]++;
     }
-    else if (jumplimiter0 > 0) jumplimiter0 = 10;
+    else if (jumplimiter[0] > 0) {
+        jumplimiter[0] = 10;
+        gravityspeed[0]++;
+    }
     if(input.isDown("DOWN")||playerAction[0][2])
 	characters[0].pos[1] += playerSpeed[0] * dt;
     
@@ -227,11 +167,14 @@ function handleInput(dt){
     else if (input.getlastkey() == "RIGHT") directions[0] = 3;
     
     //player 2
-    if((input.isDown("w")||playerAction[1][0])&&jumplimiter1<10){
+    if((input.isDown("w")||playerAction[1][0])&&jumplimiter[1]<10){
 	characters[1].pos[1] -= playerSpeed[1] * dt * 5;
-	jumplimiter1++;
+	jumplimiter[1]++;
     }
-    else if (jumplimiter1 > 0) jumplimiter1 = 10;
+    else if (jumplimiter[1] > 0) {
+        jumplimiter[1] = 10;
+        gravityspeed[1]++;
+    }
     if(input.isDown("s")||playerAction[1][2])
 	characters[1].pos[1] += playerSpeed[1] * dt;
     
@@ -245,6 +188,7 @@ function handleInput(dt){
     }
     else if (input.getlastkey() == "A") directions[1] = 2;
     else if (input.getlastkey() == "D") directions[1] = 3;
+    //console.log("a:",characters[0].pos,characters[1].pos);
 }
 
 var requestAnimFrame = function(){
@@ -266,11 +210,13 @@ function checkPlayerBounds() {
     if (characters[0].pos[0] > canVas.width - characters[0].sprite[0].size[0])
 	characters[0].pos[0] = canVas.width - characters[0].sprite[0].size[0];
     
-    //character 0 floor and reset jump
+    //character 0 floor and reset jump and gravity speed
     if (characters[0].pos[1] > canVas.height - characters[0].sprite[0].size[1]) {
         characters[0].pos[1] = canVas.height - characters[0].sprite[0].size[1];
-        if (jumplimiter0 > 0)
-	    jumplimiter0 = 0;
+        if (jumplimiter[0] > 0) {
+	    jumplimiter[0] = 0;
+            gravityspeed[0] = 0;
+        }
     }
     
     //character 1 x coordinates
@@ -283,9 +229,18 @@ function checkPlayerBounds() {
     //character 1 floor and reset jump
     if (characters[1].pos[1] > canVas.height - characters[1].sprite[0].size[1]) {
         characters[1].pos[1] = canVas.height - characters[1].sprite[0].size[1];
-        if (jumplimiter1 > 0)
-	    jumplimiter1 = 0;
+        if (jumplimiter[1] > 0) {
+	    jumplimiter[1] = 0;
+            gravityspeed[1] = 0;
+        }
     }
+}
+
+function dealdamage(target,damage) {
+    characters[target].HP -= damage;
+    ctx.fillStyle = "#FF0000";
+    ctx.drawImage(explosion,characters[target].pos[0],characters[target].pos[1]-characters[target].sprite[0].size[0]/2,40,40);
+    ctx.fillText(damage,characters[target].pos[0]+10,characters[target].pos[1]+5);
 }
 
 function collides(x, y, r, b, x2, y2, r2, b2) {
@@ -303,8 +258,10 @@ function boxCollides(pos1, size1, pos2, size2) {
 function checkCollisions() {
     checkPlayerBounds();
     if (boxCollides(characters[0].pos, characters[0].sprite[0].size, characters[1].pos, characters[1].sprite[0].size)) {
-        characters[0].HP--;
-        characters[1].HP--;
+        console.log("collision!");
+        
+        dealdamage(0,10);
+        dealdamage(1,1);
     }
 }
 
@@ -319,38 +276,32 @@ function drawthings() {
 }
 
 function printgameover() {
-    ctx.save();
-    ctx.fillStyle = "rgba(50,50,50,.4)";
-    ctx.fillRect(0,0,canVas.width,canVas.height);
-    ctx.restore();
-    ctx.font = "80px Arial";
-    ctx.fillText("GAME OVER", canVas.width/2-250, canVas.height/2);
-    getReady();
+    ctx.fillText("GAME OVER", canVas.width/2, canVas.height/2);
+    console.log("GAME OVER");
 }
+
 function main(){
     var now = Date.now();
     var dt = (now - lastTime)/1000.0;
     
+    //console.log("before update:",characters[0].pos,characters[1].pos);
     update(dt);
-    checkCollisions();
+    //console.log("after update:",characters[0].pos,characters[1].pos);
     render();
+    checkCollisions();
     
     lastTime = Date.now();
     
-    gametime-=dt;
+    if (!gameover) window.requestAnimationFrame(main);
+    
+    gametime+=dt;
     drawthings();
-    if (!gameover)
-	window.requestAnimationFrame(main);  	
-
     if (characters[0].HP <= 0 || characters[1].HP <= 0) {
         gameover = true;
         printgameover();
-	return;
     }
-    if (gametime < 0) {
+    if (gametime > 90) {
         gameover = true;
         printgameover();
-	return;
     }
 };
-
