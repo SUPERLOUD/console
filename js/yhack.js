@@ -24,6 +24,8 @@ var gravityspeed = [0,0];
 // [up,left,down,right,A,B]
 var playerAction = [[false,false,false,false,false,false],
 		    [false,false,false,false,false,false]];
+                
+var damages = [];
 
 //var syncanoKey = "2d2f7c0e75b16769aadb93a2a28111117d43deb5";
 //var instanceKey = "dark-snowflake-7198";
@@ -174,8 +176,7 @@ function init(){
 	sprite: [new Sprite('../static/p1 walk.png',[0,0],[48,48],3,[0,1,2,]),
                 new Sprite('../static/p1 walk flipped.png',[0,0],[48,48],3,[0,1,2]),
                 new Sprite('../static/p1 stand.png',[0,0],[48,48],4,[0,1,2,1]),
-                new Sprite('../static/p1 stand flipped.png',[0,0],[48,48],4,[0,1,2,1])
-        ],
+                new Sprite('../static/p1 stand flipped.png',[0,0],[48,48],4,[0,1,2,1])],
         HP:400
     });
     characters.push({
@@ -196,7 +197,6 @@ function update(dt){
     for(var i = 0;i<characters.length;i++){
 	characters[i].sprite[directions[i]].update(dt);
         //gravity
-        //characters[i].pos[1] += gravityspeed[i];
         playerSpeedy[i] += gravityspeed[i];
         knockbackSpeedy[0] += .25;
         knockbackSpeedy[1] += .25;
@@ -220,27 +220,27 @@ function renderEach(entity,i){
 
 function handleInput(dt){
     //player 1
+    //jump
     if((input.isDown("UP")||playerAction[0][0])&&jumplimiter[0]<10){
-	//characters[0].pos[1] -= playerSpeed[0] * dt * 5;
         playerSpeedy[0] = playerSpeed[0] * dt * -5;
 	jumplimiter[0]++;
     }
+    //when jump button is released, limit jump and activate gravity
     else if (jumplimiter[0] > 0) {
         jumplimiter[0] = 10;
         gravityspeed[0] += .25;
     }
+    //do we need this?
     if(input.isDown("DOWN")||playerAction[0][2]) {
-	//characters[0].pos[1] += playerSpeed[0] * dt;
         playerSpeedy[0] = playerSpeed[0] * dt;
     }
     
+    //left right movement and direction
     if(input.isDown("LEFT")||playerAction[0][1]) {
-	//characters[0].pos[0] -= playerSpeed[0] * dt;
         playerSpeedx[0] = playerSpeed[0] * dt * -1;
         directions[0] = 0;
     }
     else if(input.isDown("RIGHT")||playerAction[0][3]) {
-	//characters[0].pos[0] += playerSpeed[0] * dt;
         playerSpeedx[0] = playerSpeed[0] * dt;
         directions[0] = 1;
     }
@@ -255,27 +255,27 @@ function handleInput(dt){
     else playerSpeedx[0] = 0;
     
     //player 2
+    //jump
     if((input.isDown("w")||playerAction[1][0])&&jumplimiter[1]<10){
-	//characters[1].pos[1] -= playerSpeed[1] * dt * 5;
         playerSpeedy[1] = playerSpeed[1] * dt * -5;
 	jumplimiter[1]++;
     }
+    //when jump button is released, limit jump and activate gravity
     else if (jumplimiter[1] > 0) {
         jumplimiter[1] = 10;
         gravityspeed[1] += .25;
     }
+    //do we need this?
     if(input.isDown("s")||playerAction[1][2]) {
-	//characters[1].pos[1] += playerSpeed[1] * dt;
         playerSpeedy[1] = playerSpeed[1] * dt;
     }
     
+    //left right movement and direction
     if(input.isDown("a")||playerAction[1][1]) {
-	//characters[1].pos[0] -= playerSpeed[1] * dt;
         playerSpeedx[1] = playerSpeed[1] * dt * -1;
         directions[1] = 0;
     }
     else if(input.isDown("d")||playerAction[1][3]) {
-	//characters[1].pos[0] += playerSpeed[1] * dt;
         playerSpeedx[1] = playerSpeed[1] * dt;
         directions[1] = 1;
     }
@@ -290,6 +290,7 @@ function handleInput(dt){
     else playerSpeedx[1] = 0;
 }
 
+//update character positions based on their speeds
 function updatepositions() {
     characters[0].pos[0] += playerSpeedx[0] + knockbackSpeedx[0];
     characters[0].pos[1] += playerSpeedy[0] + knockbackSpeedy[0];
@@ -307,7 +308,8 @@ var requestAnimFrame = function(){
             window.setTimeout(callback, 1000 / 60);
         };
 }
-    
+
+//limits characters to the canvas dimensions and also resets non-controllable speeds when on the floor
 function checkPlayerBounds() {
     //character 0 x coordinates
     if (characters[0].pos[0] < 0)
@@ -316,7 +318,7 @@ function checkPlayerBounds() {
     if (characters[0].pos[0] > canVas.width - characters[0].sprite[0].size[0]*scaleFactor)
 	characters[0].pos[0] = canVas.width - characters[0].sprite[0].size[0]*scaleFactor;
     
-    //character 0 floor and reset jump and gravity speed
+    //character 0 floor and reset jump, gravity speed, and knockback speed
     if (characters[0].pos[1] >= canVas.height - characters[0].sprite[0].size[1]*scaleFactor) {
         characters[0].pos[1] = canVas.height - characters[0].sprite[0].size[1]*scaleFactor;
         playerSpeedy[0] = 0;
@@ -335,7 +337,7 @@ function checkPlayerBounds() {
     if (characters[1].pos[0] > canVas.width - characters[1].sprite[0].size[0]*scaleFactor)
 	characters[1].pos[0] = canVas.width - characters[1].sprite[0].size[0]*scaleFactor;
     
-    //character 1 floor and reset jump
+    //character 1 floor and reset jump, gravity speed, and knockback speed
     if (characters[1].pos[1] >= canVas.height - characters[1].sprite[0].size[1]*scaleFactor) {
         characters[1].pos[1] = canVas.height - characters[1].sprite[0].size[1]*scaleFactor;
         playerSpeedy[1] = 0;
@@ -348,22 +350,28 @@ function checkPlayerBounds() {
     }
 }
 
+//push to damages to be displayed on screen and deals damage to target
 function dealdamage(target,damage) {
+    damages.push({
+        value: damage,
+        x: characters[target].pos[0],
+        y: characters[target].pos[1]-characters[target].sprite[0].size[0]/2,
+        timer: 0
+    });
+    
     characters[target].HP -= damage;
-    ctx.font = damage + 20 + "px Arial"
-    ctx.fillStyle = "#FF0000";
-    ctx.drawImage(explosion,characters[target].pos[0],characters[target].pos[1]-characters[target].sprite[0].size[0]/2,40,40);
-    ctx.fillText(damage,characters[target].pos[0]+10,characters[target].pos[1]+5);
     
     knockbackleft(target,damage);
 }
 
+//knockback and disable jump until floor
 function knockbackleft(target,damage) {
     knockbackSpeedx[target] = damage * -1;
     knockbackSpeedy[target] = damage * -1 / 2;
     jumplimiter[target] = 10;
 }
 
+//knockback and disable jump until floor
 function knockbackright(target,damage) {
     knockbackSpeedx[target] = damage;
     knockbackSpeedy[target] = damage * -1 / 2;
@@ -388,19 +396,34 @@ function checkCollisions() {
 		    characters[0].sprite[0].size,
 		    characters[1].pos,
 		    characters[1].sprite[0].size)) {
-        dealdamage(0,1);
-        dealdamage(1,50);
+        dealdamage(0,50);
     }
 }
 
 function drawthings() {
+    //game time
     ctx.font = "30px Arial";
     ctx.fillStyle = "#000000";
     ctx.fillText(Math.floor(gametime),10,50);
-    ctx.fillRect(10,80,characters[0].HP,10);
+    //HP
     ctx.fillText(characters[0].HP,420,90);
-    ctx.fillRect(canVas.width/2,80,characters[1].HP,10);
     ctx.fillText(characters[1].HP,canVas.width/2+420,90);
+    //HP bars
+    ctx.fillStyle = "#FF0000";
+    ctx.fillRect(10,80,characters[0].HP,10);
+    ctx.fillRect(canVas.width/2,80,characters[1].HP,10);
+    
+    //damage explosions
+    for (var i = 0; i < damages.length; i++) {
+        if (damages[i].timer > 30) damages.shift();
+        else {
+            ctx.font = damages[i].value + 20 + "px Arial";
+            ctx.fillStyle = "#FF0000";
+            ctx.drawImage(explosion,damages[i].x,damages[i].y,damages[i].value+40,damages[i].value+40);
+            ctx.fillText(damages[i].value,damages[i].x+10,damages[i].y+5);
+            damages[i].timer++;
+        }
+    }
 }
 
 function printgameover() {
