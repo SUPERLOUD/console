@@ -489,15 +489,15 @@ function dealdamage(target,damage) {
 
 //knockback and disable jump until floor
 function knockbackleft(target,damage) {
-    knockbackSpeedx[target] = damage * -1;
-    knockbackSpeedy[target] = damage * -1 / 2;
+    knockbackSpeedx[target] += damage * -1;
+    knockbackSpeedy[target] += damage * -1 / 2;
     jumplimiter[target] = 10;
 }
 
 //knockback and disable jump until floor
 function knockbackright(target,damage) {
-    knockbackSpeedx[target] = damage;
-    knockbackSpeedy[target] = damage * -1 / 2;
+    knockbackSpeedx[target] += damage;
+    knockbackSpeedy[target] += damage * -1 / 2;
     jumplimiter[target] = 10;
 }
 
